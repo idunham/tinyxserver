@@ -1,0 +1,44 @@
+20121216: *Started logging of changes. Removed "; cd .." from make file.
+20130101: *Tried to reactivate TOSHIBA_SMM in vesa.c - seems to do no harm.
+20130104: *Added/tested SCREENSAVER as possible flag +/-5K
+		  *Added/tested SERVER_LOCK as possible flag +/-2K
+		  *Moved SMART_SCHEDULE to be a choice	+/-2K
+		  *Added/tested USE_RGB_TXT as possible flag...compiles...
+		  *Added/tested XCMISC as possible flag +/-2K (not removed from
+		  *Xext/makefile yet) TODO! 	+/-1K
+		  *Added/tested XDMCP as possible flag - this spawns error: 
+		  undefined reference to XdmcpDisposeARRAY8, XdmcpARRAY8Equal,
+		  XdmcpDisposeARRAY16 etc - from xdmcp.c - healed by adding 
+		  -lXdmcp +/-10K
+		  *Added/tested XTRAP as possible flag
+		  *Added/tested XV as possible flag
+		  *Added/tested XKB_IN_SERVER as possible flag...compiles...
+		  *Added/tested RANDR as possible flag...compiles...
+		
+		  *Added/tested XINPUT as possible flag - errors out:
+		  Xext/xtest.c missing XI.h & XIproto.h. tried to add them in
+		  include and this gives missing Xproto.h & X.h - adding them
+		  as well - but this results in failure at linking ex.
+		  undefined reference to MaybeSendDeviceMotionNotifyHint...
+		  SO NEED SOME WORK/EXTERNAL LIB
+		
+		  *Added/tested XKB as possible flag: dix/devices.c gives
+		  missing XKBsrv.h so adding that - gives missing XKBstr.h &
+		  XKBproto.h - now missing XKB.h - then missing Xmd.h - and
+		  then linking errors ex. undefined reference to
+		  XkbFreeInfo...SO NEED SOME WORK/EXTERNAL LIB
+		
+		  *Added/tested XRECORD as possible flag...gives link error
+		  from mi/miinitext.c undefined reference to
+		  RecordExtensionInit. So added lib record from xorg 1.2.0
+		  and added needed makefile changes (including link with
+		  -lXinerama) but still link error (missing 
+		  XineramaGetCursorScreen) added that to dix/events.c from 
+		  xorg1.2.0...compiles
+		  
+		  *Now the build has 13 extensions: 
+		  DEC-XTRAP, DPMS, MIT-SCREEN-SAVER, MIT-SHM, RANDR, RECORD,
+		  RENDER, SHAPE, SYNC, TOG-CUP, XC-MISC, XTEST, XVideo
+		  so for now it seems that the source is used the outmost 
+		  possible...(?)
+		
