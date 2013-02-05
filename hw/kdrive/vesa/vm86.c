@@ -49,6 +49,7 @@ THE SOFTWARE.
 { vi->vms.regs.esp -= 2;\
   LMW(vi,MAKE_POINTER(vi->vms.regs.ss, vi->vms.regs.esp)) = i;}
 
+PL
 static int vm86old(struct vm86_struct *vms);
 static int vm86_loop(Vm86InfoPtr vi);
 
@@ -187,10 +188,10 @@ Vm86DoInterrupt(Vm86InfoPtr vi, int num)
 	return -1;
     }
     memcpy(&(LM(vi,vi->ret_code)), retcode_data, sizeof(retcode_data));
-    vi->vms.regs.eflags = IF_MASK | IOPL_MASK;
+    vi->vms.regs.eflags = X86_EFLAGS_IF | X86_EFLAGS_IOPL;
     vi->vms.regs.ss = POINTER_SEGMENT(vi->stack_base);
     vi->vms.regs.esp = STACK_SIZE;
-    PUSHW(vi, IF_MASK | IOPL_MASK);
+    PUSHW(vi, X86_EFLAGS_IF | X86_EFLAGS_IOPL);
     PUSHW(vi, POINTER_SEGMENT(vi->ret_code));
     PUSHW(vi, POINTER_OFFSET(vi->ret_code));
     vi->vms.regs.cs = seg;
