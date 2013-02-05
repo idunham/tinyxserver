@@ -294,11 +294,10 @@ LockServer()
   (void) sprintf(pid_str, "%10ld\n", (long)getpid());
   (void) write(lfd, pid_str, 11);
 #ifndef __EMX__
-#ifndef USE_CHMOD
+  /* 
+   * Don't use chmod, ever. CVE-2011-4029: file permission change vulnerability.
+   */
   (void) fchmod(lfd, 0444);
-#else
-  (void) chmod(tmp, 0444);
-#endif
 #endif
   (void) close(lfd);
 
@@ -319,8 +318,9 @@ LockServer()
     else {
       /*
        * Read the pid from the existing file
+       * Don't follow symlinks, CVE-2011-4028
        */
-      lfd = open(LockFile, O_RDONLY);
+      lfd = open(LockFile, O_RDONLY|O_NOFOLLOW);
       if (lfd < 0) {
         unlink(tmp);
         FatalError("Can't read lock file %s\n", LockFile);
