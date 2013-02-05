@@ -49,8 +49,8 @@ void
 LinuxCheckChown (char *file)
 {
     struct stat	    st;
-    __uid_t	    u;
-    __gid_t	    g;
+    uid_t	    u;
+    gid_t	    g;
 
     if (stat (file, &st) < 0)
 	return;
