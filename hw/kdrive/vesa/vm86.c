@@ -49,7 +49,6 @@ THE SOFTWARE.
 { vi->vms.regs.esp -= 2;\
   LMW(vi,MAKE_POINTER(vi->vms.regs.ss, vi->vms.regs.esp)) = i;}
 
-PL
 static int vm86old(struct vm86_struct *vms);
 static int vm86_loop(Vm86InfoPtr vi);
 
