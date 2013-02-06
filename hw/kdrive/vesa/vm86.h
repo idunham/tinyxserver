@@ -82,6 +82,17 @@ typedef unsigned int	U32;
 #define MAGICMEM_BASE 0x00000
 #define MAGICMEM_SIZE 0x01000
 
+/*
+ * Work around changes in vm86 headers.
+ * Apparently, old kernels used a different naming scheme.
+ */
+#ifndef IF_MASK
+#ifdef  X86_EFLAGS_IF
+#define IF_MASK		X86_EFLAGS_IF
+#define IOPL_MASK 	X86_EFLAGS_IOPL
+#endif
+#endif
+
 /* The low memory, allocated privately from /dev/zero */
 /* 64KB should be enough for anyone, as they used to say */
 #define LOMEM_BASE 0x10000
