@@ -42,3 +42,30 @@
 		  so for now it seems that the source is used the outmost 
 		  possible...(?)
 		
+20130204: Fix some bitrot/portability issues.
+		*Use uid_t and gid_t instead of assuming the implementation
+		exploits its private namespace. (For musl)
+		*Change IF_MASK and IOPL_MASK to the equivalents in the
+		current <sys/vm86.h>
+		*Change configuration for my site.
+	-Isaac Dunham
+20130205: Fix CVEs.
+		*Fixed the following CVEs:
+		  -CVE-2011-4028
+			don't reveal if file exists
+		  -CVE-2011-4029
+			was not present unless -DUSE_CHMOD was passed;
+			vulnerable code deleted.
+		  -CVE-2007-6429
+		  	MIT SHM vulnerability.
+			Patch based on 
+			http://xorg.freedesktop.org/archive/X11R7.2/patches/\
+			xorg-xserver-1.2-multiple-overflows-v2.diff
+
+			Part of this patch was not relevant.
+		  -CVE-2008-1379
+			Overflow in SHM.
+		  -CVE-2008-1377
+		  -CVE-2008-2630
+		  *More local configuration.  This works with Debian Squeeze.
+	-Isaac Dunham
