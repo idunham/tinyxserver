@@ -6,7 +6,7 @@ CC=musl-gcc
 ####compilerflags####
 COMPFLAGS=-pipe -Os -mtune=i386 -Wall -D_BSD_SOURCE -D_GNU_SOURCE \
 -fno-strength-reduce -nodefaultlibs -fno-strict-aliasing \
--ffunction-sections -fdata-sections \
+-ffunction-sections -fdata-sections -D__KERNEL_STRICT_NAMES \
 -I/opt/musl/include -I.
 
 ####extensions####
@@ -21,7 +21,7 @@ XCMISC=-DXCMISC
 XTEST=-DXTEST
 XTRAP=-DXTRAP
 XV=-DXV
-#XKB_IN_SERVER=-DXKB_IN_SERVER
+XKB_IN_SERVER=-DXKB_IN_SERVER
 RANDR=-DRANDR
 #XRECORD=-DXRECORD
 
