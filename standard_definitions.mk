@@ -1,25 +1,26 @@
 
 ####compiler####
-CC=/usr/bin/gcc
+#CC=/usr/bin/gcc
+CC=/opt/musl/bin/musl-gcc
 
 ####compilerflags####
 COMPFLAGS=-pipe -Os -mtune=i386 -Wall -D_BSD_SOURCE -D_GNU_SOURCE -D__KERNEL_STRICT_NAMES  \
 -fno-strength-reduce -nodefaultlibs -fno-strict-aliasing \
 -ffunction-sections -fdata-sections \
--I/usr/include -I.
+-I/opt/musl/include -I.
 
 ####extensions####
 #DPMS=-DDPMSExtension
 #SCREENSAVER=-DSCREENSAVER
-#MIT-SHM=-DMITSHM
-#RENDER=-DRENDER
+MIT-SHM=-DMITSHM
+RENDER=-DRENDER
 #SHAPE=-DSHAPE		#FIXME:if not defined dont define PANORAMIX=-DPANORAMIX
 #SYNC=-DXSYNC
 #TOG-CUP=-DTOGCUP
-#XCMISC=-DXCMISC
+XCMISC=-DXCMISC
 #XTEST=-DXTEST
 #XTRAP=-DXTRAP
-#XV=-DXV
+XV=-DXV
 #RANDR=-DRANDR
 #XRECORD=-DXRECORD
 FONTCACHE=-DNOFONTSERVERACCESS	# -DFONTCACHE or -DNOFONTSERVERACCESS
@@ -30,11 +31,19 @@ FONTCACHE=-DNOFONTSERVERACCESS	# -DFONTCACHE or -DNOFONTSERVERACCESS
 
 
 ####others####
-SERVER_LOCK=-DSERVER_LOCK
-SMART_SCHEDULE=-DSMART_SCHEDULE
+#SERVER_LOCK=-DSERVER_LOCK
+#SMART_SCHEDULE=-DSMART_SCHEDULE
 USE_RGB_TXT=-DUSE_RGB_TXT
-XDMCP=-DXDMCP
+#XDMCP=-DXDMCP
 #PANORAMIX=-DPANORAMIX
+
+####where to look for fonts/colors####
+# Puppy:
+#FONTPATH=/usr/X11R7/lib/X11/fonts/misc/
+#RGB=/usr/X11R7/lib/X11/rgb
+# Debian:
+FONTPATH=/usr/share/fonts/X11/misc/
+RGB=/usr/share/X11/rgb
 
 #all deactivated creates 543K Xvesa
 #all activated creates 728K Xvesa
@@ -57,8 +66,8 @@ $(FONTCACHE) \
 -DPIXPRIV \
 $(XTEST) \
 -DFUNCPROTO=15 \
--DCOMPILEDDEFAULTFONTPATH=\"/usr/X11R7/lib/X11/fonts/misc/\" \
--DRGB_DB=\"/usr/X11R7/lib/X11/rgb\" \
+-DCOMPILEDDEFAULTFONTPATH=\"${FONTPATH}\" \
+-DRGB_DB=\"${RGB}\" \
 -D_POSIX_C_SOURCE=2 \
 $(DPMS) \
 $(SYNC) \
@@ -84,12 +93,10 @@ $(USE_RGB_TXT) \
 
 LDFLAGS=-static -Wl,--gc-sections,--sort-common,-s
 
-LINKDIR=-L/usr/lib
+LINKDIR=-L/opt/musl/lib
 
-LINKDIR=-L/usr/lib
+LIBDIR=/opt/musl/lib
 
-LIBDIR=/usr/lib
-
-INCDIR=/usr/include
+INCDIR=/opt/musl/include
 
 
