@@ -55,7 +55,7 @@ VbeGetVmib (Vm86InfoPtr vi, int mode, VbeModeInfoBlock *vmib)
 {
     int			code;
     int			mark;
-    int			vib_base;
+    //int			vib_base;	//20130209gn unused
     int			vmib_base;
     VbeModeInfoBlock	*vmib_low;
     
@@ -92,7 +92,7 @@ VbeGetNmode (Vm86InfoPtr vi)
 {
     VbeInfoBlock    vib;
     int		    code;
-    int		    ret = 0;
+  //  int		    ret = 0;	//20130209gn unused
     unsigned int    p;
     int		    n;
     int		    mode;
@@ -118,7 +118,7 @@ VbeGetModes (Vm86InfoPtr vi, VesaModePtr modes, int nmode)
 {
     VbeInfoBlock	vib;
     int			code;
-    int			ret = 0;
+   // int			ret = 0;	//20130209gn unused
     unsigned int	p;
     int			n;
     int			mode;
@@ -259,7 +259,7 @@ VbeMapFramebuffer(Vm86InfoPtr vi, VbeInfoPtr vbe, int mode, int *ret_size, CARD3
     int			size;
     int			pagesize = getpagesize();
     int			before, after;
-    int			devmem;
+   // int			devmem;	//20130209gn unused
 
     if (VbeGetVib (vi, &vib) < 0)
 	return 0;
@@ -326,8 +326,8 @@ VbeSetPalette(Vm86InfoPtr vi, VbeInfoPtr vbe, int first, int number, U8 *entries
     U8	    *palette_scratch;
     int	    mark;
     int	    palette_base;
-    int	    i, j, code;
-
+   // int	    i, j, code;
+		int	    i, code;		//20130209gn unused
     if(number == 0)
         return 0;
 
@@ -371,8 +371,8 @@ VbeGetPalette(Vm86InfoPtr vi, VbeInfoPtr vbe, int first, int number, U8 *entries
     U8	    *palette_scratch;
     int	    mark;
     int	    palette_base;
-    int	    i, j, code;
-
+    //int	    i, j, code;
+	int	    i, code;	//20130209gn unused
     if(number == 0)
         return 0;
 

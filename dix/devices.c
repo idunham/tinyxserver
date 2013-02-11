@@ -67,7 +67,7 @@ SOFTWARE.
 #endif
 #ifdef XCSECURITY
 #define _SECURITY_SERVER
-#include "security.h"
+#include "extensions/security.h"
 #endif
 #ifdef LBX
 #include "lbxserve.h"

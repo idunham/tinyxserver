@@ -607,13 +607,14 @@ XineramaChangeToCursor(CursorPtr cursor)
 
 #endif  /* PANORAMIX */
 
+/* unused 20130209gn
 static Mask
 GetNextEventMask()
 {
     lastEventMask <<= 1;
     return lastEventMask;
 }
-
+*/
 void
 SetMaskForEvent(mask, event)
     Mask mask;

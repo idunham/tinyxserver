@@ -33,6 +33,9 @@
 #include <signal.h>
 #include <stdio.h>
 
+#ifndef FNDELAY		//gn addition for diet 20130208
+#define FNDELAY O_NONBLOCK 
+#endif
 static DeviceIntPtr	pKdKeyboard, pKdPointer;
 
 static KdMouseFuncs	*kdMouseFuncs;

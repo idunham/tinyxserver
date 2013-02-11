@@ -2127,8 +2127,9 @@ DoGetImage(client, format, drawable, x, y, width, height, planemask, im_return)
     Mask		plane = 0;
     char		*pBuf;
     xGetImageReply	xgi;
+#ifdef XCSECURITY
     RegionPtr pVisibleRegion = NULL;
-
+#endif
     if ((format != XYPixmap) && (format != ZPixmap))
     {
 	client->errorValue = format;

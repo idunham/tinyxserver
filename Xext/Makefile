@@ -1,6 +1,7 @@
 include	../standard_definitions.mk
 
-DEFS=-DMITMISC -DXTRAP -DXCMISC -DBIGREQS -DFONTCACHE
+#-DMITMISC -DXTRAP -DXCMISC -DFONTCACHE
+DEFS= -DBIGREQS 
 
 CFLAGS= -I../include -I../mi -I../fb -I../hw/kdrive -I../render $(COMMONDEFS) $(DEFS)
 

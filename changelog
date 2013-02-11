@@ -69,3 +69,17 @@
 		  -CVE-2008-2630
 		  *More local configuration.  This works with Debian Squeeze.
 	-Isaac Dunham
+20130209: 	*minor changes in Xtrap/xtrapddmi.c for dietlibc builds. 
+		    hw/kdrive/kinput.c+hw/kdrive/linux/linux.c added FNDELAY for
+		    dietlibc builds.
+		    *Trying to get fontserver working (for abiword to work) - 
+		    revising -DNOFONTSERVERACCESS \\ from standard_definitions.mk.
+		    Adding -DFONTCACHE \\ to standard_definitions.mk. The extension
+		    is now reported but abiword still wont work.
+		    *changed XKB_IN_SERVER=-DXKB_IN_SERVER to XKB_IN_SERVER=-DXKB
+		    in standard_definitions.mk. and deactivated as XKB does not compile.
+		    *removed some warnings dix/dispatch, dix/events.c, os/connection.c
+		    and hw/kdrive/vesa/vbe.c
+		    *revised os/Makefile to respect settings in standard_definitions.mk
+		    *revised Xext/Makefile to respect settings in 
+		    standard_definitions.mk

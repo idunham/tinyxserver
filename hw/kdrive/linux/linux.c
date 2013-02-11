@@ -32,6 +32,10 @@
 #include <X11/keysym.h>
 #include <linux/apm_bios.h>
 
+#ifndef FNDELAY		//gn addition for diet 20130208
+#define FNDELAY O_NONBLOCK 
+#endif
+
 static int  vtno;
 int  LinuxConsoleFd;
 int  LinuxApmFd = -1;

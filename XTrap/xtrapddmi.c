@@ -42,7 +42,7 @@ SOFTWARE.
 #include <X11/Xos.h>
 #ifdef PC
 # include "fcntl.h"
-# include "io.h"
+# include "sys/io.h"
 # define O_NDELAY 0L
 #endif
 
@@ -51,14 +51,18 @@ SOFTWARE.
 #include <X11/X.h>        /* From library include environment */
 #include "input.h"    /* From server include env. (must be before Xlib.h!) */
 
-//for diet libc commentted out below
-//#ifdef PC
-//# include "scrintst.h"          /* Screen struct */
-//# include "extnsist.h"
-//#else
+#ifdef PC
+#ifndef DIET
+# include "scrintst.h"          /* Screen struct */
+# include "extnsist.h"
+#else
 # include "extnsionst.h"        /* Server ExtensionEntry definitions */
 # include "scrnintstr.h"        /* Screen struct */
-//#endif
+#endif	//DIET
+#else
+# include "extnsionst.h"        /* Server ExtensionEntry definitions */
+# include "scrnintstr.h"        /* Screen struct */
+#endif	//NOT PC
 
 #include <X11/extensions/xtrapdi.h>
 #include <X11/extensions/xtrapddmi.h>
