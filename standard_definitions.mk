@@ -4,7 +4,7 @@ CC=/usr/bin/gcc
 #CC=/opt/musl/bin/musl-gcc
 
 ####compilerflags####
-COMPFLAGS=-pipe -Os -mtune=i386 -Wall -D_BSD_SOURCE -D_GNU_SOURCE -D__KERNEL_STRICT_NAMES  \
+COMPFLAGS=-pipe -fPIC -Os -Wall -D_BSD_SOURCE -D_GNU_SOURCE -D__KERNEL_STRICT_NAMES  \
 -fno-strength-reduce -nodefaultlibs -fno-strict-aliasing \
 -ffunction-sections -fdata-sections \
 -I. -I/usr/xsrc/pkg/usr/include
@@ -47,11 +47,15 @@ PANORAMIX=-DPANORAMIX
 FONTPATH=/usr/share/fonts/X11/misc/
 RGB=/usr/share/X11/rgb
 
+#Lazyux
+#FONTPATH="/usr/share/fonts/misc/,/usr/share/fonts/truetype/,/usr/share/fonts/X11/100dpi/,/usr/share/fonts/X11/75dpi/\" 
+
+#-DRGB_DB=\"/usr/share/X11/rgb.txt\" \
+
 #all deactivated creates 543K Xvesa
 #all activated creates 728K Xvesa
 COMMONDEFS=$(COMPFLAGS) \
 -DNOERROR \
--D__i386__ \
 -Dlinux \
 -D_POSIX_SOURCE \
 -D_BSD_SOURCE \
@@ -91,13 +95,16 @@ $(XKB_IN_SERVER) \
 $(RANDR) \
 $(XRECORD) \
 $(USE_RGB_TXT) \
+$(PIXPRIV) \
+$(X_LOCALE) \
+$(XF86BIGFONT) \
+$(BIGREQS) \
 -D__KERNEL_STRICT_NAMES
 
 LDFLAGS=-static -Wl,--gc-sections,--sort-common,-s
-
 LINKDIR=-L/usr/xsrc/pkg/usr/lib
-#LINKDIR=-L/opt/musl/lib
 
+#LINKDIR=-L/opt/musl/lib
 #LIBDIR=/opt/musl/lib
 #INCDIR=/opt/musl/include
 

@@ -102,7 +102,7 @@ typedef void (*InitExtension)(INITARGS);
 #include <X11/extensions/panoramiXproto.h>
 #endif
 #ifdef XF86BIGFONT
-#include "xf86bigfstr.h"
+#include <X11/extensions/xf86bigfstr.h>
 #endif
 
 /* FIXME: this whole block of externs should be from the appropriate headers */

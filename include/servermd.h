@@ -28,13 +28,13 @@ Copyright 1987 by Digital Equipment Corporation, Maynard, Massachusetts.
 
                         All Rights Reserved
 
-Permission to use, copy, modify, and distribute this software and its 
-documentation for any purpose and without fee is hereby granted, 
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
 provided that the above copyright notice appear in all copies and that
-both that copyright notice and this permission notice appear in 
+both that copyright notice and this permission notice appear in
 supporting documentation, and that the name of Digital not be
 used in advertising or publicity pertaining to distribution of the
-software without specific, written prior permission.  
+software without specific, written prior permission.
 
 DIGITAL DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING
 ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN NO EVENT SHALL
@@ -97,7 +97,7 @@ SOFTWARE.
  *	addressing mode.  Currently defined for MIPS and SPARC, even though
  *	I remember the cg6 as performing better without it (cg3 definitely
  *	performs better with it).
- *	
+ *
  *  LARGE_INSTRUCTION_CACHE -
  *	This define increases the number of times some loops are
  *	unrolled.  On 68020 machines (with 256 bytes of i-cache),
@@ -355,7 +355,7 @@ SOFTWARE.
 #define IMAGE_BYTE_ORDER      	MSBFirst
 #define BITMAP_BIT_ORDER      	MSBFirst
 #define GLYPHPADBYTES         	4
-#define GETLEFTBITS_ALIGNMENT  1	
+#define GETLEFTBITS_ALIGNMENT  1
 
 #define BITMAP_SCANLINE_UNIT	8
 #define LARGE_INSTRUCTION_CACHE
@@ -439,8 +439,9 @@ SOFTWARE.
 	defined(__EMX__) || \
 	defined(__OS2ELF__) || \
 	defined(__QNX__) || \
-	defined(__s390x__) || defined(__s390__)
-  
+	defined(__s390x__) || defined(__s390__) || \
+	defined(__amd64__) || defined(__x86_64__)
+
 #ifndef IMAGE_BYTE_ORDER
 #define IMAGE_BYTE_ORDER	LSBFirst
 #endif
@@ -515,7 +516,7 @@ SOFTWARE.
 #define GLYPHPADBYTES		4
 #define GETLEFTBITS_ALIGNMENT	1
 #endif
- 
+
 /* size of buffer to use with GetImage, measured in bytes. There's obviously
  * a trade-off between the amount of stack (or whatever ALLOCATE_LOCAL gives
  * you) used and the number of times the ddx routine has to be called.
@@ -535,7 +536,7 @@ SOFTWARE.
 #define LOG2_BYTES_PER_SCANLINE_PAD	2
 #endif
 
-/* 
+/*
  *   This returns the number of padding units, for depth d and width w.
  * For bitmaps this can be calculated with the macros above.
  * Other depths require either grovelling over the formats field of the

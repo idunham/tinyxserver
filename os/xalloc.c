@@ -142,7 +142,7 @@ extern Bool Must_have_memory;
  * ( unsigned long	MAGIC2 ) only if SIZE_TAIL defined
  *
  */
- 
+
 /* use otherwise unused long in the header to store a magic */
 /* shouldn't this be removed for production release ? */
 #define XALLOC_DEBUG
@@ -181,7 +181,8 @@ extern Bool Must_have_memory;
 #if defined(__alpha__) || defined(__alpha) || \
     defined(__ia64__) || defined(ia64) || \
     defined(__sparc64__) || \
-    defined(__s390x__)
+    defined(__s390x__) || \
+    defined(__amd64__) || defined(__x86_64__)
 #define MAGIC			0x1404196414071968
 #define MAGIC_FREE              0x1506196615061966
 #define MAGIC2			0x2515207525182079
@@ -334,7 +335,8 @@ Xalloc (unsigned long amount)
     defined(__powerpc__) || \
     defined(__arm32__) || \
     defined(__ia64__) || defined(ia64) || \
-    defined(__s390x__) || defined(__s390__)
+    defined(__s390x__) || defined(__s390__) || \
+    defined(__amd64__) || defined(__x86_64__)
     amount = (amount + (sizeof(long)-1)) & ~(sizeof(long)-1);
 #endif
 
@@ -453,7 +455,7 @@ Xalloc (unsigned long amount)
 }
 
 /*****************
- * XNFalloc 
+ * XNFalloc
  * "no failure" realloc, alternate interface to Xalloc w/o Must_have_memory
  *****************/
 
@@ -598,9 +600,9 @@ Xrealloc (pointer ptr, unsigned long amount)
     LOG_REALLOC("Xrealloc", ptr, amount, 0);
     return NULL;
 }
-                    
+
 /*****************
- * XNFrealloc 
+ * XNFrealloc
  * "no failure" realloc, alternate interface to Xrealloc w/o Must_have_memory
  *****************/
 
@@ -616,8 +618,8 @@ XNFrealloc (pointer ptr, unsigned long amount)
 
 /*****************
  *  Xfree
- *    calls free 
- *****************/    
+ *    calls free
+ *****************/
 
 void
 Xfree(pointer ptr)

@@ -1,9 +1,9 @@
 
-include standard_definitions.mk 
+include standard_definitions.mk
 
-DEFS= -DNOERROR -D__i386__
+DEFS= -DNOERROR
 
-CFLAGS= -I.. -I../.. -I../../.. -I./include -I./common -I./render -I./Xext -I./lbx -I./fb -I./mi -I./miext/shadow -I./hw/kdrive -I./miext/layer -I./os $(COMMONDEFS) $(DEFS) 
+CFLAGS= -I.. -I../.. -I../../.. -I./include -I./common -I./render -I./Xext -I./lbx -I./fb -I./mi -I./miext/shadow -I./hw/kdrive -I./miext/layer -I./os $(COMMONDEFS) $(DEFS)
 
 OBJS=
 all: core Xvesa Xfbdev
@@ -23,10 +23,6 @@ core:
 	cd miext/layer; make
 	cd randr; make
 	cd record; make
-#	$(CC) $(CFLAGs) $(DEFS) $(LDFLAGS) -o Xvesa dix/libdix.a os/libos.a hw/kdrive/vesa/libvesa.a miext/layer/liblayer.a hw/kdrive/libkdrive.a hw/kdrive/linux/liblinux.a miext/shadow/libshadow.a fb/libfb.a mi/libmi.a Xext/libext.a Xext/extmod/libextmod.a XTrap/libxtrap.a randr/librandr.a render/librender.a record/librecord.a $(LINKDIR) -lXfont -lXinerama -lX11 -lXdmcp -lz -lm
-	
-#	$(CC) $(CFLAGs) $(DEFS) $(LDFLAGS) -o Xfbdev dix/libdix.a os/libos.a hw/kdrive/fbdev/libfbdev.a miext/layer/liblayer.a hw/kdrive/libkdrive.a hw/kdrive/linux/liblinux.a miext/shadow/libshadow.a fb/libfb.a mi/libmi.a Xext/libext.a Xext/extmod/libextmod.a XTrap/libxtrap.a randr/librandr.a render/librender.a record/librecord.a $(LINKDIR) -lXfont -lXinerama -lX11 -lXdmcp -lz -lm	
-	
 	
 Xvesa: core
 	cd hw/kdrive/vesa; make
@@ -56,7 +52,7 @@ clean:
 	rm -f Xvesa
 	rm -f Xfbdev
 install:
-	
+
 tarball:	clean
 	./make-tarball.sh
 

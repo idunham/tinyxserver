@@ -51,7 +51,7 @@ SOFTWARE.
 
 #ifdef XF86BIGFONT
 #define _XF86BIGFONT_SERVER_
-#include "xf86bigfont.h"
+#include <X11/extensions/xf86bigfont.h>
 #endif
 
 #define QUERYCHARINFO(pci, pr)  *(pr) = (pci)->metrics
