@@ -48,6 +48,7 @@ SOFTWARE.
 #ifndef CMAPSTRUCT_H
 #define CMAPSTRUCT_H 1
 
+#include <X11/Xarch.h>
 #include "colormap.h"
 #include "screenint.h"
 
@@ -96,7 +97,14 @@ typedef struct _ColormapRec
 {
     VisualPtr	pVisual;
     short	class;		/* PseudoColor or DirectColor */
+#ifdef _XSERVER64
+    short	pad0;
+    XID		pad1;
+#endif
     long	mid;		/* client's name for colormap */
+#if defined(_XSERVER64) && (X_BYTE_ORDER == X_LITTLE_ENDIAN)
+    XID		pad2;
+#endif
     ScreenPtr	pScreen;	/* screen map is associated with */
     short	flags;		/* 1 = IsDefault
 				 * 2 = AllAllocated */
