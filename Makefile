@@ -57,7 +57,25 @@ clean:
 	rm -f Xvesa
 	rm -f Xfbdev
 	rm -f xinit
+
 install:
+	install -D -m 755 Xfbdev $(DESTDIR)/$(BINDIR)/Xfbdev
+	install -m 755 xinit $(DESTDIR)/$(BINDIR)/xinit
+	ln -s $(BINDIR)/Xfbdev $(DESTDIR)/$(BINDIR)/X
+	install -D -m 644 init/xinit.1 $(DESTDIR)/$(MANDIR)/man1/xinit.1
+	install -D -m 644 README $(DESTDIR)/$(DOCDIR)/tinyxserver/README
+	install -m 644 changelog $(DESTDIR)/$(DOCDIR)/tinyxserver/changelog
+	install -D -m 644 init/README.upstream $(DESTDIR)/$(DOCDIR)/xinit/README
+	install -m 644 init/ChangeLog $(DESTDIR)/$(DOCDIR)/xinit/ChangeLog
+	install -m 644 init/AUTHORS $(DESTDIR)/$(DOCDIR)/xinit/AUTHORS
+	install -m 644 init/COPYING $(DESTDIR)/$(DOCDIR)/xinit/COPYING
+
+install-fonts:
+	cd fonts && for i in *.pcf fonts.alias; do install -D -m 644 $$i $(DESTDIR)/$(FONTDIR)/misc/$$i; done
+	install -D -m 644 fonts/AUTHORS.misc $(DESTDIR)/$(DOCDIR)/font-misc-misc/AUTHORS
+	install -m 644 fonts/COPYING.misc $(DESTDIR)/$(DOCDIR)/font-misc-misc/COPYING
+	install -D -m 644 fonts/COPYING.cursor $(DESTDIR)/$(DOCDIR)/font-cursor-misc/COPYING
+	install -D -m 644 fonts/COPYING.alias $(DESTDIR)/$(DOCDIR)/font-alias/COPYING
 
 tarball:	clean
 	./make-tarball.sh
