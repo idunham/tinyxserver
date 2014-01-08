@@ -1,28 +1,30 @@
 
 ####compiler####
-#CC=/usr/bin/gcc
-CC=/opt/musl/bin/musl-gcc
+CC=/usr/bin/gcc
+#CC=/opt/musl/bin/musl-gcc
 
 ####compilerflags####
 COMPFLAGS=-pipe -Os -mtune=i386 -Wall -D_BSD_SOURCE -D_GNU_SOURCE -D__KERNEL_STRICT_NAMES  \
 -fno-strength-reduce -nodefaultlibs -fno-strict-aliasing \
 -ffunction-sections -fdata-sections \
--I/opt/musl/include -I.
+-I. -I/usr/xsrc/pkg/usr/include
+
 
 ####extensions####
-#DPMS=-DDPMSExtension
-#SCREENSAVER=-DSCREENSAVER
+DPMS=-DDPMSExtension
+SCREENSAVER=-DSCREENSAVER
 MIT-SHM=-DMITSHM
 RENDER=-DRENDER
-#SHAPE=-DSHAPE		#FIXME:if not defined dont define PANORAMIX=-DPANORAMIX
-#SYNC=-DXSYNC
-#TOG-CUP=-DTOGCUP
+#FIXME:if not defined dont define PANORAMIX=-DPANORAMIX
+SHAPE=-DSHAPE
+SYNC=-DXSYNC
+TOG-CUP=-DTOGCUP
 XCMISC=-DXCMISC
-#XTEST=-DXTEST
-#XTRAP=-DXTRAP
+XTEST=-DXTEST
+XTRAP=-DXTRAP
 XV=-DXV
-#RANDR=-DRANDR
-#XRECORD=-DXRECORD
+RANDR=-DRANDR
+XRECORD=-DXRECORD
 FONTCACHE=-DNOFONTSERVERACCESS	# -DFONTCACHE or -DNOFONTSERVERACCESS
 
 ####not working####
@@ -35,7 +37,7 @@ FONTCACHE=-DNOFONTSERVERACCESS	# -DFONTCACHE or -DNOFONTSERVERACCESS
 #SMART_SCHEDULE=-DSMART_SCHEDULE
 USE_RGB_TXT=-DUSE_RGB_TXT
 #XDMCP=-DXDMCP
-#PANORAMIX=-DPANORAMIX
+PANORAMIX=-DPANORAMIX
 
 ####where to look for fonts/colors####
 # Puppy:
@@ -93,10 +95,13 @@ $(USE_RGB_TXT) \
 
 LDFLAGS=-static -Wl,--gc-sections,--sort-common,-s
 
-LINKDIR=-L/opt/musl/lib
+LINKDIR=-L/usr/xsrc/pkg/usr/lib
+#LINKDIR=-L/opt/musl/lib
 
-LIBDIR=/opt/musl/lib
+#LIBDIR=/opt/musl/lib
+#INCDIR=/opt/musl/include
 
-INCDIR=/opt/musl/include
-
+PREDIR=/usr
+LIBDIR=$(DESTDIR)$(PREDIR)/lib
+INCDIR=$(DESTIR)$(PREDIR)/include
 
