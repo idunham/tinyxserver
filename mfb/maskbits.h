@@ -360,9 +360,7 @@ extern PixelType mask[];
  *  We will default its usage for those who do not know anything, but will
  *  override its effect if the machine doesn't look like a sun3 
  */
-#if !defined(mc68020) || !defined(sun)
 #define NO_3_60_CG4
-#endif
 
 /* This is gross.  We want to #define u_putbits as something which can be used
  * in the case of the 3/60+CG4, but if we use /bin/cc or are on another

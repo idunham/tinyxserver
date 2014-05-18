@@ -15,32 +15,13 @@
  */
 /* $XFree86: xc/programs/Xserver/os/xdmcp.c,v 3.20 2001/11/19 20:44:18 tsi Exp $ */
 
-#ifdef WIN32
-/* avoid conflicting definitions */
-#define BOOL wBOOL
-#define ATOM wATOM
-#define FreeResource wFreeResource
-#include <winsock.h>
-#undef BOOL
-#undef ATOM
-#undef FreeResource
-#undef CreateWindowA
-#undef RT_FONT
-#undef RT_CURSOR
-#endif
 
 #include <X11/Xos.h>
 
-#if !defined(WIN32)
-#ifndef Lynx
 #include <sys/param.h>
 #include <sys/socket.h>
-#else
-#include <socket.h>
-#endif
 #include <netinet/in.h>
 #include <netdb.h>
-#endif
 
 #include <stdio.h>
 #include <X11/X.h>
@@ -52,16 +33,7 @@
 #include "dixstruct.h"
 #include "opaque.h"
 
-#if defined(DGUX)
-#include <net/net_ioctl.h>
-#include <sys/ioctl.h>
-#endif
 
-#ifdef STREAMSCONN
-#include <tiuser.h>
-#include <netconfig.h>
-#include <netdir.h>
-#endif
 
 #ifdef XDMCP
 #undef REQUEST
@@ -966,43 +938,6 @@ XdmcpAddAuthorization (
 static void
 get_xdmcp_sock(void)
 {
-#ifdef STREAMSCONN
-    struct netconfig *nconf;
-
-    if ((xdmcpSocket = t_open("/dev/udp", O_RDWR, 0)) < 0) {
-	XdmcpWarning("t_open() of /dev/udp failed");
-	return;
-    }
-
-    if( t_bind(xdmcpSocket,NULL,NULL) < 0 ) {
-	XdmcpWarning("UDP socket creation failed");
-	t_error("t_bind(xdmcpSocket) failed" );
-	t_close(xdmcpSocket);
-	return;
-    }
-
-    /*
-     * This part of the code looks contrived. It will actually fit in nicely
-     * when the CLTS part of Xtrans is implemented.
-     */
- 
-    if( (nconf=getnetconfigent("udp")) == NULL ) {
-	XdmcpWarning("UDP socket creation failed: getnetconfigent()");
-	t_unbind(xdmcpSocket);
-	t_close(xdmcpSocket);
-	return;
-    }
- 
-    if( netdir_options(nconf, ND_SET_BROADCAST, xdmcpSocket, NULL) ) {
-	XdmcpWarning("UDP set broadcast option failed: netdir_options()");
-	freenetconfigent(nconf);
-	t_unbind(xdmcpSocket);
-	t_close(xdmcpSocket);
-	return;
-    }
- 
-    freenetconfigent(nconf);
-#else
     int soopts = 1;
 
     if ((xdmcpSocket = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
@@ -1019,7 +954,6 @@ get_xdmcp_sock(void)
 	    exit(1);
 	}
     }
-#endif /* STREAMSCONN */
 }
 
 static void

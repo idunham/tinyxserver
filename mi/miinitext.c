@@ -55,11 +55,6 @@ SOFTWARE.
 #undef PEXEXT
 #endif
 
-#if defined(QNX4) /* sleaze for Watcom on QNX4 ... */
-#undef PEXEXT
-#undef XIE
-#undef GLXEXT
-#endif
 
 #ifdef PANORAMIX
 extern Bool noPanoramiXExtension;

@@ -260,27 +260,8 @@ static unsigned long *free_lists[MAX_SMALL/SIZE_STEPS];
 #include <sys/mman.h>
 #endif /* CSRG_BASED */
 
-#if defined(DGUX)
-#define HAS_GETPAGESIZE
-#define MMAP_DEV_ZERO
-#include <sys/types.h>
-#include <sys/mman.h>
-#include <unistd.h>
-#endif /* DGUX */
 
-#if defined(SVR4) && !defined(DGUX)
-#define MMAP_DEV_ZERO
-#include <sys/types.h>
-#include <sys/mman.h>
-#include <unistd.h>
-#endif /* SVR4 && !DGUX */
 
-#if defined(sun) && !defined(SVR4) /* SunOS */
-#define MMAP_DEV_ZERO	/* doesn't SunOS have MAP_ANON ?? */
-#define HAS_GETPAGESIZE
-#include <sys/types.h>
-#include <sys/mman.h>
-#endif /* sun && !SVR4 */
 
 #ifdef XNO_SYSCONF
 #undef _SC_PAGESIZE

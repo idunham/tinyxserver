@@ -52,11 +52,7 @@ SOFTWARE.
 #ifdef NDBM
 #include <ndbm.h>
 #else
-#ifdef SVR4
-#include <rpcsvc/dbm.h>
-#else
 #include <dbm.h>
-#endif
 #endif
 #include "rgb.h"
 #include "os.h"
@@ -225,16 +221,9 @@ OsInitColors()
 
   if (!was_here)
     {
-#ifndef __EMX__
       path = (char*)ALLOCATE_LOCAL(strlen(rgbPath) +5);
       strcpy(path, rgbPath);
       strcat(path, ".txt");
-#else
-      char *tmp = (char*)__XOS2RedirRoot(rgbPath);
-      path = (char*)ALLOCATE_LOCAL(strlen(tmp) +5);
-      strcpy(path, tmp);
-      strcat(path, ".txt");
-#endif
       if (!(rgb = fopen(path, "r")))
         {
 	   ErrorF( "Couldn't open RGB_DB '%s'\n", rgbPath );
@@ -245,11 +234,7 @@ OsInitColors()
       while(fgets(line, sizeof(line), rgb))
 	{
 	  lineno++;
-#ifndef __EMX__
 	  if (sscanf(line,"%d %d %d %[^\n]\n", &red, &green, &blue, name) == 4)
-#else
-	  if (sscanf(line,"%d %d %d %[^\n\r]\n", &red, &green, &blue, name) == 4)
-#endif
 	    {
 	      if (red >= 0   && red <= 0xff &&
 		  green >= 0 && green <= 0xff &&

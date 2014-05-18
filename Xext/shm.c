@@ -30,13 +30,8 @@ in this Software without prior written authorization from The Open Group.
 /* $Xorg: shm.c,v 1.4 2001/02/09 02:04:33 xorgcvs Exp $ */
 
 #include <sys/types.h>
-#ifndef Lynx
 #include <sys/ipc.h>
 #include <sys/shm.h>
-#else
-#include <ipc.h>
-#include <shm.h>
-#endif
 #include <unistd.h>
 #define NEED_REPLIES
 #define NEED_EVENTS

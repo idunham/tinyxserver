@@ -55,9 +55,6 @@ SOFTWARE.
 /*
  * Special per-machine configuration flags.
  */
-#ifdef CRAY
-#define WORD64				/* 64-bit architecture */
-#endif
 #if defined(__alpha) || defined(__alpha__) || \
     defined(__ia64__) || defined(ia64) || \
     defined(__sparc64__) || \
@@ -116,13 +113,8 @@ typedef unsigned long CARD64;
 typedef unsigned int INT32;
 typedef unsigned int INT16;
 #else
-#ifdef __STDC__
-typedef signed int INT32;
-typedef signed int INT16;
-#else
 typedef int INT32;
 typedef int INT16;
-#endif
 #endif
 #else
 #define B32
@@ -136,11 +128,7 @@ typedef long INT32;
 typedef short INT16;
 #endif
 
-#if defined(__STDC__) || defined(sgi) || defined(AIXV3)
 typedef signed char    INT8;
-#else
-typedef char           INT8;
-#endif
 
 #ifdef LONG64
 typedef unsigned long CARD64;
@@ -154,17 +142,8 @@ typedef unsigned char  CARD8;
 typedef CARD32		BITS32;
 typedef CARD16		BITS16;
 
-#ifndef __EMX__
 typedef CARD8		BYTE;
 typedef CARD8           BOOL;
-#else /* __EMX__ */
-/*
- * This is bad style, but the central include file <os2.h> declares them
- * as well
- */
-#define BYTE		CARD8
-#define BOOL		CARD8
-#endif /* __EMX__ */
 
 /*
  * definitions for sign-extending bitfields on 64-bit architectures

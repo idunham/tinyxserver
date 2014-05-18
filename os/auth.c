@@ -47,9 +47,6 @@ from The Open Group.
 #define _SECURITY_SERVER
 # include   "extensions/security.h"
 #endif
-#ifdef WIN32
-#include "Xw32defs.h"
-#endif
 
 struct protocol {
     unsigned short   name_length;
@@ -135,23 +132,17 @@ LoadAuthorization (void)
     Xauth   *auth;
     int	    i;
     int	    count = 0;
-#if !defined(WIN32) && !defined(__EMX__)
     char    *buf;
-#endif
 
     ShouldLoadAuth = FALSE;
     if (!authorization_file)
 	return 0;
-#if !defined(WIN32) && !defined(__EMX__)
     buf = xalloc (strlen(authorization_file) + 5);
     if (!buf)
 	return 0;
     sprintf (buf, "cat %s", authorization_file);
     f = Popen (buf, "r");
     xfree (buf);
-#else
-    f = fopen (authorization_file, "r");
-#endif
     if (!f)
 	return 0;
 
@@ -169,11 +160,7 @@ LoadAuthorization (void)
 	XauDisposeAuth (auth);
     }
 
-#if !defined(WIN32) && !defined(__EMX__)
     Pclose (f);
-#else
-    fclose (f);
-#endif
     return count;
 }
 

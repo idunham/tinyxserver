@@ -59,8 +59,6 @@ SOFTWARE.
 
 #include <X11/Xdmcp.h>
 
-#ifndef sgi	    /* SGI defines OPEN_MAX in a useless way */
-#ifndef X_NOT_POSIX
 #ifdef _POSIX_SOURCE
 #include <limits.h>
 #else
@@ -68,33 +66,14 @@ SOFTWARE.
 #include <limits.h>
 #undef _POSIX_SOURCE
 #endif
-#else /* X_NOT_POSIX */
-#ifdef WIN32
-#define _POSIX_
-#include <limits.h>
-#undef _POSIX_
-#endif
-#endif /* X_NOT_POSIX */
-#endif
 
-#ifdef __QNX__
-#define NOFILES_MAX 256
-#endif
 #ifndef OPEN_MAX
-#ifdef SVR4
-#define OPEN_MAX 256
-#else
 #include <sys/param.h>
 #ifndef OPEN_MAX
 #if defined(NOFILE) && !defined(NOFILES_MAX)
 #define OPEN_MAX NOFILE
 #else
-#ifndef __EMX__
 #define OPEN_MAX NOFILES_MAX
-#else
-#define OPEN_MAX 256
-#endif
-#endif
 #endif
 #endif
 #endif
@@ -115,9 +94,7 @@ SOFTWARE.
 /* MAXSELECT is the number of fds that select() can handle */
 #define MAXSELECT (sizeof(fd_set) * NBBY)
 
-#if !defined(hpux) && !defined(SVR4) && !defined(SYSV)
 #define HAS_GETDTABLESIZE
-#endif
 
 #include <stddef.h>
 

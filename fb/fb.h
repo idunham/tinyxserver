@@ -98,9 +98,6 @@
 #define FbFullMask(n)   ((n) == FB_UNIT ? FB_ALLONES : ((((FbBits) 1) << n) - 1))
 
 #if FB_SHIFT == 6
-# ifdef WIN32
-typedef unsigned __int64    FbBits;
-# else
 #  if defined(__alpha__) || defined(__alpha) || \
       defined(ia64) || defined(__ia64__) || \
       defined(__sparc64__) || \
@@ -110,7 +107,6 @@ typedef unsigned long	    FbBits;
 #  else
 typedef unsigned long long  FbBits;
 #  endif
-# endif
 # define FBBITS_SIZE (8)
 #endif
 

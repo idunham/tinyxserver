@@ -44,20 +44,8 @@ from The Open Group.
 
 #include <rpc/rpc.h>
 
-#ifdef sun
-/* <rpc/auth.h> only includes this if _KERNEL is #defined... */
-extern bool_t xdr_opaque_auth(XDR *, struct opaque_auth *);
-#endif
 
-#if defined(DGUX)
-#include <time.h>
-#include <rpc/auth_des.h>
-#endif /* DGUX */
 
-#ifdef ultrix
-#include <time.h>
-#include <rpc/auth_des.h>
-#endif
 
 static enum auth_stat why;
 
@@ -105,11 +93,7 @@ int  len;
         why = AUTH_TOOWEAK;
         goto bad2;
     }
-#ifdef SVR4
-    if ((why = __authenticate(&r, &msg)) != AUTH_OK) {
-#else
     if ((why = _authenticate(&r, &msg)) != AUTH_OK) {
-#endif
             goto bad2;
     }
     return (((struct authdes_cred *) r.rq_clntcred)->adc_fullname.name); 

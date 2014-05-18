@@ -82,18 +82,10 @@ from The Open Group.
 
 static
 Xtransport_table Xtransports[] = {
-#if defined(STREAMSCONN)
-    { &TRANS(TLITCPFuncs),	TRANS_TLI_TCP_INDEX },
-    { &TRANS(TLIINETFuncs),	TRANS_TLI_INET_INDEX },
-    { &TRANS(TLITLIFuncs),	TRANS_TLI_TLI_INDEX },
-#endif /* STREAMSCONN */
 #if defined(TCPCONN)
     { &TRANS(SocketTCPFuncs),	TRANS_SOCKET_TCP_INDEX },
     { &TRANS(SocketINETFuncs),	TRANS_SOCKET_INET_INDEX },
 #endif /* TCPCONN */
-#if defined(DNETCONN)
-    { &TRANS(DNETFuncs),	TRANS_DNET_INDEX },
-#endif /* DNETCONN */
 #if defined(UNIXCONN)
 #if !defined(LOCALCONN)
     { &TRANS(SocketLocalFuncs),	TRANS_SOCKET_LOCAL_INDEX },
@@ -105,25 +97,15 @@ Xtransport_table Xtransports[] = {
 #endif /* OS2PIPECONN */
 #if defined(LOCALCONN)
     { &TRANS(LocalFuncs),	TRANS_LOCAL_LOCAL_INDEX },
-#ifndef sun
     { &TRANS(PTSFuncs),		TRANS_LOCAL_PTS_INDEX },
-#endif /* sun */
-#ifdef SVR4
-    { &TRANS(NAMEDFuncs),	TRANS_LOCAL_NAMED_INDEX },
-#endif
-#ifndef sun
     { &TRANS(ISCFuncs),		TRANS_LOCAL_ISC_INDEX },
     { &TRANS(SCOFuncs),		TRANS_LOCAL_SCO_INDEX },
-#endif /* sun */
 #endif /* LOCALCONN */
 };
 
 #define NUMTRANS	(sizeof(Xtransports)/sizeof(Xtransport_table))
 
 
-#ifdef WIN32
-#define ioctl ioctlsocket
-#endif
 
 
 
@@ -382,13 +364,6 @@ TRANS(Open) (int type, char *address)
 
     PRMSG (2,"Open(%d,%s)\n", type, address, 0);
 
-#if defined(WIN32) && (defined(TCPCONN) || defined(DNETCONN))
-    if (TRANS(WSAStartup)())
-    {
-	PRMSG (1,"Open: WSAStartup failed\n", 0, 0, 0);
-	return NULL;
-    }
-#endif
 
     /* Parse the Address */
 
@@ -670,41 +645,9 @@ TRANS(SetOption) (XtransConnInfo ciptr, int option, int arg)
 	    /* Set to blocking mode */
 	    break;
 	case 1: /* Set to non-blocking mode */
-
-#if defined(O_NONBLOCK) && (!defined(ultrix) && !defined(hpux) && !defined(AIXV3) && !defined(uniosu) && !defined(__EMX__) && !defined(SCO)) && !defined(__QNX__)
 	    ret = fcntl (fd, F_GETFL, 0);
 	    if (ret != -1)
 		ret = fcntl (fd, F_SETFL, ret | O_NONBLOCK);
-#else
-#ifdef FIOSNBIO
-	{
-	    int arg;
-	    arg = 1;
-	    ret = ioctl (fd, FIOSNBIO, &arg);
-	}
-#else
-#if (defined(AIXV3) || defined(uniosu) || defined(WIN32) || defined(__EMX__) || defined(__QNX__)) && defined(FIONBIO)
-	{
-	    int arg;
-	    arg = 1;
-/* IBM TCP/IP understands this option too well: it causes TRANS(Read) to fail
- * eventually with EWOULDBLOCK */
-#ifndef __EMX__
-	    ret = ioctl (fd, FIONBIO, &arg);
-#else
-/*	    ret = ioctl(fd, FIONBIO, &arg, sizeof(int));*/
-#endif
-	}
-#else
-	    ret = fcntl (fd, F_GETFL, 0);
-#ifdef FNDELAY
-	    ret = fcntl (fd, F_SETFL, ret | FNDELAY);
-#else
-	    ret = fcntl (fd, F_SETFL, ret | O_NDELAY);
-#endif
-#endif /* AIXV3  || uniosu */
-#endif /* FIOSNBIO */
-#endif /* O_NONBLOCK */
 	    break;
 	default:
 	    /* Unknown option */
@@ -1198,107 +1141,8 @@ TRANS(MakeAllCLTSServerListeners) (char *port, int *partial, int *count_ret,
  * may be used by it.
  */
 
-#ifdef CRAY
 
-/*
- * Cray UniCOS does not have readv and writev so we emulate
- */
 
-static int TRANS(ReadV) (XtransConnInfo ciptr, struct iovec *iov, int iovcnt)
-
-{
-    struct msghdr hdr;
-
-    hdr.msg_iov = iov;
-    hdr.msg_iovlen = iovcnt;
-    hdr.msg_accrights = 0;
-    hdr.msg_accrightslen = 0;
-    hdr.msg_name = 0;
-    hdr.msg_namelen = 0;
-
-    return (recvmsg (ciptr->fd, &hdr, 0));
-}
-
-static int TRANS(WriteV) (XtransConnInfo ciptr, struct iovec *iov, int iovcnt)
-
-{
-    struct msghdr hdr;
-
-    hdr.msg_iov = iov;
-    hdr.msg_iovlen = iovcnt;
-    hdr.msg_accrights = 0;
-    hdr.msg_accrightslen = 0;
-    hdr.msg_name = 0;
-    hdr.msg_namelen = 0;
-
-    return (sendmsg (ciptr->fd, &hdr, 0));
-}
-
-#endif /* CRAY */
-
-#if (defined(SYSV) && defined(i386) && !defined(SCO325)) || defined(WIN32) || defined(__sxg__) || defined(__EMX__)
-
-/*
- * emulate readv
- */
-
-static int TRANS(ReadV) (XtransConnInfo ciptr, struct iovec *iov, int iovcnt)
-
-{
-    int i, len, total;
-    char *base;
-
-    ESET(0);
-    for (i = 0, total = 0;  i < iovcnt;  i++, iov++) {
-	len = iov->iov_len;
-	base = iov->iov_base;
-	while (len > 0) {
-	    register int nbytes;
-	    nbytes = TRANS(Read) (ciptr, base, len);
-	    if (nbytes < 0 && total == 0)  return -1;
-	    if (nbytes <= 0)  return total;
-	    ESET(0);
-	    len   -= nbytes;
-	    total += nbytes;
-	    base  += nbytes;
-	}
-    }
-    return total;
-}
-
-#endif /* SYSV && i386 || WIN32 || __sxg__ */
-
-#if (defined(SYSV) && defined(i386) && !defined(SCO325)) || defined(WIN32) || defined(__sxg__) || defined(__EMX__)
-
-/*
- * emulate writev
- */
-
-static int TRANS(WriteV) (XtransConnInfo ciptr, struct iovec *iov, int iovcnt)
-
-{
-    int i, len, total;
-    char *base;
-
-    ESET(0);
-    for (i = 0, total = 0;  i < iovcnt;  i++, iov++) {
-	len = iov->iov_len;
-	base = iov->iov_base;
-	while (len > 0) {
-	    register int nbytes;
-	    nbytes = TRANS(Write) (ciptr, base, len);
-	    if (nbytes < 0 && total == 0)  return -1;
-	    if (nbytes <= 0)  return total;
-	    ESET(0);
-	    len   -= nbytes;
-	    total += nbytes;
-	    base  += nbytes;
-	}
-    }
-    return total;
-}
-
-#endif /* SYSV && i386 || WIN32 || __sxg__ */
 
 
 #if (defined(_POSIX_SOURCE) && !defined(AIXV3) && !defined(__QNX__)) || defined(hpux) || defined(USG) || defined(SVR4) || defined(SCO)

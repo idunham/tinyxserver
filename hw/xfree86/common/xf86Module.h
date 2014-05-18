@@ -71,11 +71,7 @@ typedef enum {
 #define MODINFOSTRING2	0x10dc023a
 
 #ifndef MODULEVENDORSTRING
-#ifndef __OS2ELF__
 #define MODULEVENDORSTRING	"The XFree86 Project"
-#else
-#define MODULEVENDORSTRING	"The XFree86 Project - XFree86/OS2"
-#endif
 #endif
 
 /* Error return codes for errmaj.  New codes must only be added at the end. */

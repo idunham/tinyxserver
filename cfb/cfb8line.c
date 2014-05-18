@@ -72,9 +72,6 @@ in this Software without prior written authorization from The Open Group.
 #  define WIDTH_FAST  1152
 # endif
 
-# ifdef ultrix
-#  define WIDTH_FAST  1024
-# endif
 
 # ifdef Mips
 #  define WIDTH_FAST 4096

@@ -65,13 +65,8 @@ SOFTWARE.
 #endif
 #endif
 
-#if defined(Lynx) || defined(SCO) || defined(SCO325)
-#include <sys/wait.h>
-#endif
 
-#if !defined(SYSV) && !defined(WIN32) && !defined(Lynx) && !defined(QNX4)
 #include <sys/resource.h>
-#endif
 
 #ifndef ADMPATH
 #define ADMPATH "/usr/adm/X%smsgs"
@@ -110,10 +105,8 @@ OsInit()
 #ifdef XFree86LOADER
 	xf86WrapperInit();
 #endif
-#if !defined(SCO)
 	fclose(stdin);
 	fclose(stdout);
-#endif
 	/* 
 	 * If a write of zero bytes to stderr returns non-zero, i.e. -1, 
 	 * then writing to stderr failed, and we'll write somewhere else 
@@ -138,25 +131,11 @@ OsInit()
 		dup2 (fileno (err), 2);
 		fclose (err);
 	    }
-#if defined(SYSV) || defined(SVR4) || defined(__EMX__) || defined(WIN32) || defined(__CYGWIN__)
-	    {
-	    static char buf[BUFSIZ];
-	    setvbuf (stderr, buf, _IOLBF, BUFSIZ);
-	    }
-#else
 	    setlinebuf(stderr);
-#endif
 	}
 
-#ifndef X_NOT_POSIX
 	if (getpgrp () == 0)
 	    setpgid (0, 0);
-#else
-#if !defined(SYSV) && !defined(WIN32)
-	if (getpgrp (0) == 0)
-	    setpgrp (0, getpid ());
-#endif
-#endif
 
 #ifdef RLIMIT_DATA
 	if (limitDataSpace >= 0)

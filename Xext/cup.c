@@ -53,9 +53,6 @@ static void		ResetProc ();
 static unsigned char	ReqCode = 0;
 static int		ErrorBase;
 
-#if defined(WIN32) || defined(TESTWIN32)
-#define HAVE_SPECIAL_DESKTOP_COLORS
-#endif
 
 static xColorItem citems[] = {
 #ifndef HAVE_SPECIAL_DESKTOP_COLORS
@@ -65,7 +62,6 @@ static xColorItem citems[] = {
     {   0,      0,      0,      0, 0, 0 },
     {   1, 0xffff, 0xffff, 0xffff, 0, 0 }
 #else
-#ifndef WIN32
     /* 
 	This approximates the MS-Windows desktop colormap for testing 
         purposes but has black and white pixels in the typical Unix 
@@ -92,32 +88,6 @@ static xColorItem citems[] = {
     { 251,      0,      0, 0xffff, 0, 0 },
     { 252, 0xffff,      0, 0xffff, 0, 0 },
     { 253,      0, 0xffff, 0xffff, 0, 0 }
-#else
-    /* 
-	this is the MS-Windows desktop, adjusted for X's 16-bit color
-	specifications.
-    */
-    {   0,      0,      0,      0, 0, 0 },
-    {   1, 0x8000,      0,      0, 0, 0 },
-    {   2,      0, 0x8000,      0, 0, 0 },
-    {   3, 0x8000, 0x8000,      0, 0, 0 },
-    {   4,      0,      0, 0x8000, 0, 0 },
-    {   5, 0x8000,      0, 0x8000, 0, 0 },
-    {   6,      0, 0x8000, 0x8000, 0, 0 },
-    {   7, 0xc000, 0xc000, 0xc000, 0, 0 },
-    {   8, 0xc000, 0xdc00, 0xc000, 0, 0 },
-    {   9, 0xa600, 0xca00, 0xf000, 0, 0 },
-    { 246, 0xff00, 0xfb00, 0xf000, 0, 0 },
-    { 247, 0xa000, 0xa000, 0xa400, 0, 0 },
-    { 248, 0x8000, 0x8000, 0x8000, 0, 0 },
-    { 249, 0xff00,      0,      0, 0, 0 },
-    { 250,      0, 0xff00,      0, 0, 0 },
-    { 251, 0xff00, 0xff00,      0, 0, 0 },
-    { 252,      0,      0, 0xff00, 0, 0 },
-    { 253, 0xff00,      0, 0xff00, 0, 0 },
-    { 254,      0, 0xff00, 0xff00, 0, 0 },
-    { 255, 0xff00, 0xff00, 0xff00, 0, 0 }
-#endif
 #endif
 };
 #define NUM_DESKTOP_COLORS (sizeof citems / sizeof citems[0])

@@ -48,9 +48,7 @@ in this Software without prior written authorization from The Open Group.
 #include "xf86_ansic.h"
 #else
 #include <stdio.h>
-#if !defined(WIN32) && !defined(Lynx)
 #include <sys/time.h>
-#endif
 #endif
 
 /* given an OtherClientPtr obj, get the ClientPtr */

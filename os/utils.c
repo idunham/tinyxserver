@@ -51,14 +51,7 @@ OR PERFORMANCE OF THIS SOFTWARE.
 */
 /* $XFree86: xc/programs/Xserver/os/utils.c,v 3.81 2002/01/16 20:39:51 dawes Exp $ */
 #include <stdlib.h>
-#ifdef __CYGWIN__
-#include <stdlib.h>
-#include <signal.h>
-#endif
 
-#if defined(WIN32) && !defined(__CYGWIN__)
-#include <X11/Xwinsock.h>
-#endif
 #include <X11/Xos.h>
 #include <stdio.h>
 #include "misc.h"
@@ -80,25 +73,17 @@ OR PERFORMANCE OF THIS SOFTWARE.
 #endif
 #endif
 #include <sys/wait.h>
-#if !defined(SYSV) && !defined(WIN32) && !defined(Lynx) && !defined(QNX4)
 #include <sys/resource.h>
-#endif
 #include <time.h>
 #include <sys/stat.h>
 #include <ctype.h>    /* for isspace */
 #include <stdarg.h>
 
-#if defined(DGUX)
-#include <sys/resource.h>
-#include <netdb.h>
-#endif
 
 #include <stdlib.h>	/* for malloc() */
 
 #if defined(TCPCONN) || defined(STREAMSCONN)
-# ifndef WIN32
 #  include <netdb.h>
-# endif
 #endif
 
 #include "opaque.h"
@@ -139,10 +124,6 @@ int auditTrailLevel = 1;
 
 Bool Must_have_memory = FALSE;
 
-#ifdef AIXV3
-int SyncOn  = 0;
-extern int SelectWaitTime;
-#endif
 
 #ifdef DEBUG
 #ifndef SPECIAL_MALLOC
@@ -156,9 +137,6 @@ long Memory_fail = 0;
 #include <stdlib.h>  /* for random() */
 #endif
 
-#ifdef sgi
-int userdefinedfontpath = 0;
-#endif /* sgi */
 
 char *dev_tty_from_init = NULL;		/* since we need to parse it anyway */
 
@@ -167,9 +145,6 @@ OsSignal(sig, handler)
     int sig;
     OsSigHandlerPtr handler;
 {
-#ifdef X_NOT_POSIX
-    return signal(sig, handler);
-#else
     struct sigaction act, oact;
 
     sigemptyset(&act.sa_mask);
@@ -179,7 +154,6 @@ OsSignal(sig, handler)
     act.sa_handler = handler;
     sigaction(sig, &act, &oact);
     return oact.sa_handler;
-#endif
 }
 	
 #ifdef SERVER_LOCK
@@ -189,32 +163,15 @@ OsSignal(sig, handler)
  * server at a time.  This keeps the servers from stomping on each other
  * if the user forgets to give them different display numbers.
  */
-#ifndef __EMX__
 #define LOCK_DIR "/tmp"
 #define LOCK_TMP_PREFIX "/.tX"
 #define LOCK_PREFIX "/.X"
 #define LOCK_SUFFIX "-lock"
-#else
-#define LOCK_TMP_PREFIX "/xf86$"
-#define LOCK_PREFIX "/xf86_"
-#define LOCK_SUFFIX ".lck"
-#endif
 
-#if defined(DGUX)
-#include <limits.h>
-#include <sys/param.h>
-#endif
 
-#ifdef __EMX__
-#define link rename
-#endif
 
 #ifndef PATH_MAX
-#ifndef Lynx
 #include <sys/param.h>
-#else
-#include <param.h>
-#endif
 #ifndef PATH_MAX
 #ifdef MAXPATHLEN
 #define PATH_MAX MAXPATHLEN
@@ -246,14 +203,7 @@ LockServer()
   /*
    * Path names
    */
-#ifndef __EMX__
   tmppath = LOCK_DIR;
-#else
-  /* OS/2 uses TMP directory, must also prepare for 8.3 names */
-  tmppath = getenv("TMP");
-  if (!tmppath)
-    FatalError("No TMP dir found\n");
-#endif
 
   len = strlen(LOCK_PREFIX) > strlen(LOCK_TMP_PREFIX) ? strlen(LOCK_PREFIX) :
 						strlen(LOCK_TMP_PREFIX);
@@ -293,12 +243,10 @@ LockServer()
     FatalError("Could not create lock file in %s\n", tmp);
   (void) sprintf(pid_str, "%10ld\n", (long)getpid());
   (void) write(lfd, pid_str, 11);
-#ifndef __EMX__
   /* 
    * Don't use chmod, ever. CVE-2011-4029: file permission change vulnerability.
    */
   (void) fchmod(lfd, 0444);
-#endif
   (void) close(lfd);
 
   /*
@@ -378,9 +326,6 @@ UnlockServer()
 
   if (!StillLocking){
 
-#ifdef __EMX__
-  (void) chmod(LockFile,S_IREAD|S_IWRITE);
-#endif /* __EMX__ */
   (void) unlink(LockFile);
   }
 }
@@ -401,9 +346,6 @@ AutoResetServer (sig)
     chdir ("/tmp");
     exit (0);
 #endif
-#if defined(SYSV) && defined(X_NOT_POSIX)
-    OsSignal (SIGHUP, AutoResetServer);
-#endif
     errno = olderrno;
 }
 
@@ -418,10 +360,6 @@ GiveUp(sig)
 
     dispatchException |= DE_TERMINATE;
     isItTimeToYield = TRUE;
-#if defined(SYSV) && defined(X_NOT_POSIX)
-    if (sig)
-	OsSignal(sig, SIG_IGN);
-#endif
     errno = olderrno;
 }
 
@@ -486,7 +424,6 @@ AdjustWaitForDelay (waitTime, newdelay)
 
 void UseMsg()
 {
-#if !defined(AIXrt) && !defined(AIX386)
     ErrorF("use: X [:<display>] [option]\n");
     ErrorF("-a #                   mouse acceleration (pixels)\n");
     ErrorF("-ac                    disable access control restrictions\n");
@@ -561,7 +498,6 @@ void UseMsg()
 #ifdef XDMCP
     XdmcpUseMsg();
 #endif
-#endif /* !AIXrt && ! AIX386 */
 #ifdef XKB
     XkbUseMsg();
 #endif
@@ -733,9 +669,6 @@ char	*argv[];
 	{
 	    if(++i < argc)
 	    {
-#ifdef sgi
-		userdefinedfontpath = 1;
-#endif /* sgi */
 	        defaultFontPath = argv[i];
 	    }
 	    else
@@ -791,11 +724,9 @@ char	*argv[];
 #ifdef SERVER_LOCK
 	else if ( strcmp ( argv[i], "-nolock") == 0)
 	{
-#if !defined(WIN32) && !defined(__EMX__) && !defined(__CYGWIN__)
 	  if (getuid() != 0)
 	    ErrorF("Warning: the -nolock option can only be used by root\n");
 	  else
-#endif
 	    nolock = TRUE;
 	}
 #endif
@@ -921,19 +852,6 @@ char	*argv[];
 	{
 	    i = skip - 1;
 	}
-#endif
-#ifdef AIXV3
-        else if ( strcmp( argv[i], "-timeout") == 0)
-        {
-            if(++i < argc)
-                SelectWaitTime = atoi(argv[i]);
-            else
-                UseMsg();
-        }
-        else if ( strcmp( argv[i], "-sync") == 0)
-        {
-            SyncOn++;
-        }
 #endif
 #ifdef SMART_SCHEDULE
 	else if ( strcmp( argv[i], "-dumbSched") == 0)
@@ -1068,10 +986,8 @@ ExpandCommandLine(pargc, pargv)
 {
     int i;
 
-#if !defined(WIN32) && !defined(__EMX__) && !defined(__CYGWIN__)
     if (getuid() != geteuid())
 	return;
-#endif
 
     for (i = 1; i < *pargc; i++)
     {
@@ -1407,10 +1323,6 @@ VErrorF(f, args)
     const char *f;
     va_list args;
 {
-#ifdef AIXV3
-    if (SyncOn)
-        sync();
-#else
 #ifdef DDXOSVERRORF
     if (OsVendorVErrorFProc)
 	OsVendorVErrorFProc(f, args);
@@ -1419,7 +1331,6 @@ VErrorF(f, args)
 #else
     vfprintf(stderr, f, args);
 #endif
-#endif /* AIXV3 */
 }
 
 void
@@ -1590,7 +1501,6 @@ OsReleaseSignals (void)
 #endif
 }
 
-#if !defined(WIN32) && !defined(__EMX__)
 /*
  * "safer" versions of system(3), popen(3) and pclose(3) which give up
  * all privs before running a command.
@@ -1760,7 +1670,6 @@ Pclose(iop)
     
     return pid == -1 ? -1 : pstat;
 }
-#endif /* !WIN32 && !__EMX__ */
 
 
 /*
@@ -1843,9 +1752,6 @@ CheckUserParameters(int argc, char **argv, char **envp)
     enum BadCode bad = NotBad;
     int i = 0, j;
     char *a, *e = NULL;
-#if defined(__QNX__) && !defined(__QNXNTO__)
-    char cmd_name[64];
-#endif
 
 #if CHECK_EUID
     if (geteuid() == 0 && getuid() != geteuid())

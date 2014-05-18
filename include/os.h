@@ -92,9 +92,6 @@ typedef struct _NewClientRec *NewClientPtr;
 #endif
 
 #ifndef IN_MODULE
-#ifdef SCO
-#include <stdio.h>
-#endif
 #include <string.h>
 #endif
 
@@ -570,15 +567,9 @@ void OsReleaseSignals (
 #endif		     
 		     );
 
-#if !defined(WIN32) && !defined(__EMX__)
 extern int System(char *);
 extern pointer Popen(char *, char *);
 extern int Pclose(pointer);
-#else
-#define System(a) system(a)
-#define Popen(a,b) popen(a,b)
-#define Pclose(a) pclose(a)
-#endif
 
 extern void CheckUserParameters(int argc, char **argv, char **envp);
 extern void CheckUserAuthorization(void);

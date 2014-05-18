@@ -175,9 +175,6 @@ SOFTWARE.
 #define GETLEFTBITS_ALIGNMENT   1
 
 /* XXX Should this be for Lynx only? */
-#ifdef Lynx
-#define BITMAP_SCANLINE_UNIT	8
-#endif
 
 #define LARGE_INSTRUCTION_CACHE
 #define FAST_CONSTANT_OFFSET_MODE
@@ -239,20 +236,6 @@ SOFTWARE.
 #endif /* sun && !(i386 && SVR4) */
 
 
-#if defined(AIXV3)
-
-#define IMAGE_BYTE_ORDER        MSBFirst        /* Values for the RISC/6000 */
-#define BITMAP_BIT_ORDER        MSBFirst
-#define GLYPHPADBYTES           4
-#define GETLEFTBITS_ALIGNMENT   1
-
-#define LARGE_INSTRUCTION_CACHE
-#define FAST_CONSTANT_OFFSET_MODE
-#define PLENTIFUL_REGISTERS
-#define AVOID_MEMORY_READ
-
-#define FAST_MEMCPY
-#endif /* AIXV3 */
 
 #if defined(ibm032) || defined (ibm)
 
@@ -272,19 +255,6 @@ SOFTWARE.
 
 #endif /* ibm */
 
-#ifdef hpux
-
-#define IMAGE_BYTE_ORDER	MSBFirst        /* Values for the HP only */
-#define BITMAP_BIT_ORDER	MSBFirst
-#define	GLYPHPADBYTES		2		/* to match product server */
-#define	GETLEFTBITS_ALIGNMENT	4		/* PA forces longs to 4 */
-						/* byte boundries */
-#define AVOID_MEMORY_READ
-#define FAST_CONSTANT_OFFSET_MODE
-#define LARGE_INSTRUCTION_CACHE
-#define PLENTIFUL_REGISTERS
-
-#endif /* hpux */
 
 #if defined (M4310) || defined(M4315) || defined(M4317) || defined(M4319) || defined(M4330)
 
@@ -485,29 +455,6 @@ SOFTWARE.
 
 #endif /* linux/m68k */
 
-#ifdef sgi
-
-#define IMAGE_BYTE_ORDER	MSBFirst
-#define BITMAP_BIT_ORDER	MSBFirst
-
-#if (_MIPS_SZLONG == 64)
-
-# define GLYPHPADBYTES		4
-# define GETLEFTBITS_ALIGNMENT	1
-
-#else
-
-#define GLYPHPADBYTES		2
-#define GETLEFTBITS_ALIGNMENT	4
-
-#endif
-
-#define AVOID_MEMORY_READ
-#define FAST_CONSTANT_OFFSET_MODE
-#define LARGE_INSTRUCTION_CACHE
-#define PLENTIFUL_REGISTERS
-
-#endif
 
 /* linux on the Compaq Itsy */
 #if defined(linux) && defined(__arm__)

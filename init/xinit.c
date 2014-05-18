@@ -53,9 +53,7 @@ in this Software without prior written authorization from The Open Group.
 #endif
 #endif
 
-#ifndef SYSV
 #include <sys/wait.h>
-#endif
 #include <errno.h>
 #include <setjmp.h>
 #include <stdarg.h>
@@ -69,18 +67,6 @@ in this Software without prior written authorization from The Open Group.
 
 #if !defined(SIGCHLD) && defined(SIGCLD)
 #define SIGCHLD SIGCLD
-#endif
-#ifdef __UNIXOS2__
-#define INCL_DOSMODULEMGR
-#include <os2.h>
-#define setpgid(a,b)
-#define setuid(a)
-#define setgid(a)
-#define SHELL "cmd.exe"
-#define XINITRC "xinitrc.cmd"
-#define XSERVERRC "xservrc.cmd"
-char **envsave;	/* to circumvent an UNIXOS2 problem */
-#define environ envsave
 #endif
 
 #include <stdlib.h>
@@ -108,9 +94,6 @@ char **newenvironlast = NULL;
 #define setpgid setpgrp
 #endif
 
-#ifdef __UNIXOS2__
-#define HAS_EXECVPE
-#endif
 
 #ifdef HAS_EXECVPE
 #define Execvpe(path, argv, envp) execvpe(path, argv, envp)
@@ -119,17 +102,6 @@ char **newenvironlast = NULL;
 #endif
 
 const char * const server_names[] = {
-#if defined(ultrix) && defined(mips)
-    "Xdec        Digital color display on DECstation",
-#endif
-#if defined(sun) && !defined(XORG)	/* Sun */
-    "Xsun        Sun BW2, CG2, CG3, CG4, or CG6 on Sun 2, 3, 4, or 386i",
-    "Xsunmono    Sun BW2 on Sun 2, 3, 4, or 386i ",
-    "Xsun24      Sun BW2, CG2, CG3, CG4, CG6, or CG8 on Sun 4",
-#endif
-#ifdef hpux				/* HP */
-    "Xhp         HP monochrome and colors displays on 9000/300 series",
-#endif
 #ifdef ibm				/* IBM */
     "Xibm        IBM AED, APA, 8514a, megapel, VGA displays on PC/RT",
 #endif
@@ -176,13 +148,11 @@ static char **client = clientargv + 2;		/* make sure room for sh .xinitrc args *
 static char *displayNum = NULL;
 static char *program = NULL;
 static Display *xd = NULL;			/* server connection */
-#ifndef SYSV
 #if defined(__CYGWIN__) || defined(SVR4) || defined(_POSIX_SOURCE) || defined(CSRG_BASED) || defined(__UNIXOS2__) || defined(Lynx) || defined(__APPLE__)
 int status;
 #else
 union wait	status;
 #endif
-#endif /* SYSV */
 int serverpid = -1;
 int clientpid = -1;
 volatile int gotSignal = 0;
@@ -226,23 +196,16 @@ Execute(char **vec,		/* has room from up above */
 	char **envp)
 {
     Execvpe (vec[0], vec, envp);
-#ifndef __UNIXOS2__
     if (access (vec[0], R_OK) == 0) {
 	vec--;				/* back it up to stuff shell in */
 	vec[0] = SHELL;
 	Execvpe (vec[0], vec, envp);
     }
-#endif
     return;
 }
 
-#ifndef __UNIXOS2__
 int
 main(int argc, char *argv[])
-#else
-int
-main(int argc, char *argv[], char *envp[])
-#endif
 {
 	register char **sptr = server;
 	register char **cptr = client;
@@ -258,50 +221,15 @@ main(int argc, char *argv[], char *envp[])
 #endif
 #endif
 
-#ifdef __UNIXOS2__
-	envsave = envp;	/* circumvent an EMX problem */
-
-	/* Check whether the system will run at all */
-	if (_emx_rev < 50) {
-		APIRET rc;
-		HMODULE hmod;
-		char name[CCHMAXPATH];
-		char fail[9];
-		fputs ("This program requires emx.dll revision 50 (0.9c) "
-			"or later.\n", stderr);
-		rc = DosLoadModule (fail, sizeof (fail), "emx", &hmod);
-		if (rc == 0) {
-			rc = DosQueryModuleName (hmod, sizeof (name), name);
-			if (rc == 0)
-				fprintf (stderr, "Please delete or update `%s'.\n", name);
-			DosFreeModule (hmod);
-		}
-		exit (2);
-	}
-#endif
 	program = *argv++;
 	argc--;
 	/*
 	 * copy the client args.
 	 */
 	if (argc == 0 ||
-#ifndef __UNIXOS2__
 	    (**argv != '/' && **argv != '.')) {
-#else
-	    (**argv != '/' && **argv != '\\' && **argv != '.' &&
-	     !(isalpha(**argv) && (*argv)[1]==':'))) {
-#endif
 		for (ptr = default_client; *ptr; )
 			*cptr++ = *ptr++;
-#ifdef sun
-		/* 
-		 * If running on a sun, and if WINDOW_PARENT isn't defined, 
-		 * that means SunWindows isn't running, so we should pass 
-		 * the -C flag to xterm so that it sets up a console.
-		 */
-		if ( getenv("WINDOW_PARENT") == NULL )
-		    *cptr++ = "-C";
-#endif /* sun */
 	} else {
 		client_given = 1;
 	}
@@ -321,19 +249,8 @@ main(int argc, char *argv[], char *envp[])
 	 * Copy the server args.
 	 */
 	if (argc == 0 ||
-#ifndef __UNIXOS2__
 	    (**argv != '/' && **argv != '.')) {
 		*sptr++ = default_server;
-#else
-	    (**argv != '/' && **argv != '\\' && **argv != '.' &&
-	     !(isalpha(**argv) && (*argv)[1]==':'))) {
-		*sptr = getenv("XSERVER");
-		if (!*sptr) {
-			Error("No XSERVER environment variable set");
-			exit(1);
-		}
-		*sptr++;
-#endif
 	} else {
 		server_given = 1;
 		*sptr++ = *argv++;
@@ -519,12 +436,6 @@ processTimeout(int timeout, char *string)
 	static char	*laststring;
 
 	for (;;) {
-#if defined(SYSV) || defined(__UNIXOS2__)
-		alarm(1);
-		if ((pidfound = wait(NULL)) == serverpid)
-			break;
-		alarm(0);
-#else /* SYSV */
 #if defined(SVR4) || defined(_POSIX_SOURCE) || defined(Lynx) || defined(__APPLE__)
 		if ((pidfound = waitpid(serverpid, &status, WNOHANG)) == serverpid)
 			break;
@@ -532,7 +443,6 @@ processTimeout(int timeout, char *string)
 		if ((pidfound = wait3(&status, WNOHANG, NULL)) == serverpid)
 			break;
 #endif
-#endif /* SYSV */
 		if (timeout) {
 			if (i == 0 && string != laststring)
 				fprintf(stderr, "\r\nwaiting for %s ", string);
@@ -554,9 +464,6 @@ static int
 startServer(char *server[])
 {
 	sigset_t mask, old;
-#ifdef __UNIXOS2__
-	sigset_t pendings;
-#endif
 
 	sigemptyset(&mask);
 	sigaddset(&mask, SIGUSR1);
@@ -588,9 +495,7 @@ startServer(char *server[])
 		 * prevent server from getting sighup from vhangup()
 		 * if client is xterm -L
 		 */
-#ifndef __UNIXOS2__
 		setpgid(0,getpid());
-#endif
 		Execute (server, environ);
 		Error ("no server \"%s\" in PATH\n", server[0]);
 		{
@@ -635,17 +540,6 @@ startServer(char *server[])
 		 */
 		alarm (15);
 
-#ifdef __UNIXOS2__
-		/*
-		 * fg2003/05/06: work around a problem in EMX: sigsuspend()
-		 * does not deliver pending signals when called but when
-		 * returning; so if SIGUSR1 has already been sent by the
-		 * server, we would still have to await SIGALRM
-		 */
-		sigemptyset(&pendings);
-		sigpending(&pendings);
-		if (!sigismember(&pendings, SIGUSR1))
-#endif /* __UNIXOS2__ */
 		sigsuspend(&old);
 		alarm (0);
 		sigprocmask(SIG_SETMASK, &old, NULL);
@@ -760,11 +654,6 @@ startClient(char *client[])
 		}
 		setpgid(0, getpid());
 		environ = newenviron;
-#ifdef __UNIXOS2__
-#undef environ
-		environ = newenviron;
-		client[0] = (char*)__XOS2RedirRoot(client[0]);
-#endif
 		Execute (client,newenviron);
 		Error ("no program named \"%s\" in PATH\r\n", client[0]);
 		fprintf (stderr,

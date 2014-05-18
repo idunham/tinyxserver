@@ -56,18 +56,12 @@ SOFTWARE.
  *
  *****************************************************************/
 
-#ifdef WIN32
-#include <X11/Xwinsock.h>
-#endif
 #include <X11/Xos.h>			/* for strings, fcntl, time */
 #include <errno.h>
 #include <stdio.h>
 #include <X11/X.h>
 #include "misc.h"
 
-#ifdef __EMX__
-#define select(n,r,w,x,t) os2PseudoSelect(n,r,w,x,t)
-#endif
 #include "osdep.h"
 #include <X11/Xpoll.h>
 #include "dixstruct.h"
@@ -442,7 +436,6 @@ WaitForSomething(pClientsReady)
     nready = 0;
     if (XFD_ANYSET (&clientsReadable))
     {
-#ifndef WIN32
 	for (i=0; i<howmany(XFD_SETSIZE, NFDBITS); i++)
 	{
 	    int highest_priority = 0;
@@ -454,17 +447,6 @@ WaitForSomething(pClientsReady)
 		curclient = ffs (clientsReadable.fds_bits[i]) - 1;
 		client_index = /* raphael: modified */
 			ConnectionTranslation[curclient + (i * (sizeof(fd_mask) * 8))];
-#else
-	int highest_priority = 0;
-	fd_set savedClientsReadable;
-	XFD_COPYSET(&clientsReadable, &savedClientsReadable);
-	for (i = 0; i < XFD_SETCOUNT(&savedClientsReadable); i++)
-	{
-	    int client_priority, client_index;
-
-	    curclient = XFD_FD(&savedClientsReadable, i);
-	    client_index = ConnectionTranslation[curclient];
-#endif
 #ifdef XSYNC
 		/*  We implement "strict" priorities.
 		 *  Only the highest priority client is returned to
@@ -496,12 +478,8 @@ WaitForSomething(pClientsReady)
 		{
 		    pClientsReady[nready++] = client_index;
 		}
-#ifndef WIN32
 		clientsReadable.fds_bits[i] &= ~(((fd_mask)1L) << curclient);
 	    }
-#else
-	    FD_CLR(curclient, &clientsReadable);
-#endif
 	}
     }
     return nready;

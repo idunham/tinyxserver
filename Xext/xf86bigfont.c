@@ -44,13 +44,6 @@
    PAGE_SIZE. It is defined in <asm/page.h>. */
 #include <asm/page.h>
 #endif
-#ifdef SVR4
-#include <sys/sysmacros.h>
-#endif
-#if defined(ISC) || defined(__CYGWIN__) || defined(SCO) || defined(SCO325)
-#include <sys/param.h>
-#include <sys/sysmacros.h>
-#endif
 #include <sys/ipc.h>
 #include <sys/shm.h>
 #include <sys/stat.h>

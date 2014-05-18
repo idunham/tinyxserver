@@ -53,14 +53,8 @@ SOFTWARE.
 #include <X11/Xtrans.h>
 #include "Xmd.h"
 #include <errno.h>
-#ifndef Lynx
 #include <sys/param.h>
-#ifndef __EMX__
 #include <sys/uio.h>
-#endif
-#else
-#include <uio.h>
-#endif
 #include "X.h"
 #include "Xproto.h"
 #include "os.h"

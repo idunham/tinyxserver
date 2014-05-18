@@ -41,9 +41,6 @@ from The Open Group.
 #ifdef TCPCONN
 #include <netinet/in.h>
 #endif
-#ifdef DNETCONN
-#include <netdnet/dn.h>
-#endif
 #include <arpa/inet.h>
 #include <krb5/krb5.h>
 /* 9/93: krb5.h leaks some symbols */
@@ -331,13 +328,6 @@ int k5_stage1(client)
 	    cli_addr.length = sizeof (struct in_addr);
 	    cli_addr.contents =
 		(krb5_octet *)&((struct sockaddr_in *)&cli_net_addr)->sin_addr;
-	    break;
-#endif
-#ifdef DNETCONN
-	case AF_DECnet:
-	    cli_addr.length = sizeof (struct dn_naddr);
-	    cli_addr.contents =
-		(krb5_octet *)&((struct sockaddr_dn *)&cli_net_addr)->sdn_add;
 	    break;
 #endif
 	default:

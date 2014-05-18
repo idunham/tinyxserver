@@ -72,15 +72,8 @@ from The Open Group.
  * message.
  */
 
-#ifndef __EMX__
 #  define XTRANSDEBUG 1
-#else
-#define XTRANSDEBUG 1
-#endif
 
-#ifdef WIN32
-#define _WILLWINSOCK_
-#endif
 
 #include <X11/Xtrans.h>
 
@@ -90,24 +83,16 @@ from The Open Group.
 
 #include <errno.h>
 
-#ifndef WIN32
-#ifndef Lynx
 #include <sys/socket.h>
-#else
-#include <socket.h>
-#endif
 #include <netinet/in.h>
 #include <arpa/inet.h>
-#ifdef __EMX__
-#include <sys/ioctl.h>
-#endif
 
 /*
  * Moved the setting of NEED_UTSNAME to this header file from Xtrans.c,
  * to avoid a race condition. JKJ (6/5/97)
  */
 
-#if (defined(_POSIX_SOURCE) && !defined(AIXV3) && !defined(__QNX__)) || defined(hpux) || defined(USG) || defined(SVR4) || defined(SCO)
+#ifdef _POSIX_SOURCE
 #ifndef NEED_UTSNAME
 #define NEED_UTSNAME
 #endif
@@ -120,7 +105,6 @@ from The Open Group.
 
 #ifndef TRANS_OPEN_MAX
 
-#ifndef X_NOT_POSIX
 #ifdef _POSIX_SOURCE
 #include <limits.h>
 #else
@@ -128,14 +112,10 @@ from The Open Group.
 #include <limits.h>
 #undef _POSIX_SOURCE
 #endif
-#endif
 #ifndef OPEN_MAX
 #ifdef __GNU__
 #define OPEN_MAX (sysconf(_SC_OPEN_MAX))
 #endif
-#ifdef SVR4
-#define OPEN_MAX 256
-#else
 #include <sys/param.h>
 #ifndef OPEN_MAX
 #ifdef __OSF1__
@@ -144,12 +124,7 @@ from The Open Group.
 #ifdef NOFILE
 #define OPEN_MAX NOFILE
 #else
-#if !defined(__EMX__) && !defined(__QNX__)
 #define OPEN_MAX NOFILES_MAX
-#else
-#define OPEN_MAX 256
-#endif
-#endif
 #endif
 #endif
 #endif
@@ -166,21 +141,9 @@ from The Open Group.
 
 #endif /* TRANS_OPEN_MAX */
 
-#ifdef __EMX__
-#define ESET(val)
-#else
 #define ESET(val) errno = val
-#endif
 #define EGET() errno
 
-#else /* WIN32 */
-
-#include <limits.h>	/* for USHRT_MAX */
-
-#define ESET(val) WSASetLastError(val)
-#define EGET() WSAGetLastError()
-
-#endif /* WIN32 */
 
 #include <stddef.h>
 
@@ -373,38 +336,14 @@ typedef struct _Xtransport_table {
  * systems, so they may be emulated.
  */
 
-#if defined(CRAY) || (defined(SYSV) && defined(i386) && !defined(SCO325)) || defined(WIN32) || defined(__sxg__) || defined(__EMX__)
-
-#define READV(ciptr, iov, iovcnt)	TRANS(ReadV)(ciptr, iov, iovcnt)
-
-static	int TRANS(ReadV)(
-    XtransConnInfo,	/* ciptr */
-    struct iovec *,	/* iov */
-    int			/* iovcnt */
-);
-
-#else
 
 #define READV(ciptr, iov, iovcnt)	readv(ciptr->fd, iov, iovcnt)
 
-#endif /* CRAY || (SYSV && i386) || WIN32 || __sxg__ || */
 
 
-#if defined(CRAY) || (defined(SYSV) && defined(i386) && !defined(SCO325)) || defined(WIN32) || defined(__sxg__) || defined(__EMX__)
-
-#define WRITEV(ciptr, iov, iovcnt)	TRANS(WriteV)(ciptr, iov, iovcnt)
-
-static int TRANS(WriteV)(
-    XtransConnInfo,	/* ciptr */
-    struct iovec *,	/* iov */
-    int 		/* iovcnt */
-);
-
-#else
 
 #define WRITEV(ciptr, iov, iovcnt)	writev(ciptr->fd, iov, iovcnt)
 
-#endif /* CRAY || WIN32 || __sxg__ */
 
 
 static int is_numeric (

@@ -29,11 +29,7 @@
 #include "../os/osdep.h"
 #include <X11/Xauth.h>
 #ifndef USL
-#ifndef Lynx
 #include <sys/socket.h>
-#else
-#include <socket.h>
-#endif
 #endif /* USL */
 #endif
 

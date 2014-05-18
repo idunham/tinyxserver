@@ -47,9 +47,6 @@ SOFTWARE.
 ******************************************************************/
 /* $XFree86: xc/programs/Xserver/os/access.c,v 3.39 2002/01/07 20:38:29 dawes Exp $ */
 
-#ifdef WIN32
-#include <X11/Xwinsock.h>
-#endif
 
 #include <stdio.h>
 #include <X11/Xtrans.h>
@@ -60,53 +57,19 @@ SOFTWARE.
 #include "site.h"
 #include <errno.h>
 #include <sys/types.h>
-#ifndef WIN32
-#ifndef Lynx
 #include <sys/socket.h>
-#else
-#include <socket.h>
-#endif
 #include <sys/ioctl.h>
 #include <ctype.h>
 
 #if defined(TCPCONN) || defined(STREAMSCONN) || defined(ISC) || defined(SCO)
 #include <netinet/in.h>
 #endif /* TCPCONN || STREAMSCONN || ISC || SCO */
-#ifdef DNETCONN
-#include <netdnet/dn.h>
-#include <netdnet/dnetdb.h>
-#endif
 
 
-#if defined(DGUX)
-#include <sys/ioctl.h>
-#include <sys/socket.h>
-#include <net/if.h>
-#include <netinet/in.h>
-#include <ctype.h>
-#include <sys/utsname.h>
-#include <sys/stream.h>
-#include <sys/stropts.h>
-#include <sys/param.h>
-#include <sys/sockio.h>
-#endif
 
 
-#if defined(hpux) || defined(QNX4)
-# include <sys/utsname.h>
-# ifdef HAS_IFREQ
-#  include <net/if.h>
-# endif
-#else
 #if defined(SVR4) ||  (defined(SYSV) && defined(i386)) || defined(__GNU__)
 # include <sys/utsname.h>
-#endif
-#if defined(SYSV) &&  defined(i386)
-# include <sys/stream.h>
-# ifdef ISC
-#  include <sys/stropts.h>
-#  include <sys/sioctl.h>
-# endif /* ISC */
 #endif
 #ifdef __GNU__
 #undef SIOCGIFCONF
@@ -114,14 +77,7 @@ SOFTWARE.
 #else /*!__GNU__*/
 # include <net/if.h>
 #endif /*__GNU__ */
-#endif /* hpux */
 
-#ifdef SVR4
-#ifndef SCO
-#include <sys/sockio.h>
-#endif
-#include <sys/stropts.h>
-#endif
 
 #include <netdb.h>
 
@@ -138,14 +94,9 @@ SOFTWARE.
 #endif
 #endif
 
-#endif /* WIN32 */
 
 #ifndef PATH_MAX
-#ifndef Lynx
 #include <sys/param.h>
-#else
-#include <param.h>
-#endif 
 #ifndef PATH_MAX
 #ifdef MAXPATHLEN
 #define PATH_MAX MAXPATHLEN
@@ -258,58 +209,7 @@ AccessUsingXdmcp (void)
 }
 
 
-#if ((defined(SVR4) && !defined(DGUX) && !defined(SCO325) && !defined(sun) && !defined(NCR)) || defined(ISC)) && defined(SIOCGIFCONF)
-
-/* Deal with different SIOCGIFCONF ioctl semantics on these OSs */
-
-static int
-ifioctl (int fd, int cmd, char *arg)
-{
-    struct strioctl ioc;
-    int ret;
-
-    bzero((char *) &ioc, sizeof(ioc));
-    ioc.ic_cmd = cmd;
-    ioc.ic_timout = 0;
-    if (cmd == SIOCGIFCONF)
-    {
-	ioc.ic_len = ((struct ifconf *) arg)->ifc_len;
-	ioc.ic_dp = ((struct ifconf *) arg)->ifc_buf;
-#ifdef ISC
-	/* SIOCGIFCONF is somewhat brain damaged on ISC. The argument
-	 * buffer must contain the ifconf structure as header. Ifc_req
-	 * is also not a pointer but a one element array of ifreq
-	 * structures. On return this array is extended by enough
-	 * ifreq fields to hold all interfaces. The return buffer length
-	 * is placed in the buffer header.
-	 */
-        ((struct ifconf *) ioc.ic_dp)->ifc_len =
-                                         ioc.ic_len - sizeof(struct ifconf);
-#endif
-    }
-    else
-    {
-	ioc.ic_len = sizeof(struct ifreq);
-	ioc.ic_dp = arg;
-    }
-    ret = ioctl(fd, I_STR, (char *) &ioc);
-    if (ret >= 0 && cmd == SIOCGIFCONF)
-#ifdef SVR4
-	((struct ifconf *) arg)->ifc_len = ioc.ic_len;
-#endif
-#ifdef ISC
-    {
-	((struct ifconf *) arg)->ifc_len =
-				 ((struct ifconf *)ioc.ic_dp)->ifc_len;
-	((struct ifconf *) arg)->ifc_buf = 
-			(caddr_t)((struct ifconf *)ioc.ic_dp)->ifc_req;
-    }
-#endif
-    return(ret);
-}
-#else /* Case DGUX, sun, SCO325 NCR and others  */
 #define ifioctl ioctl
-#endif /* ((SVR4 && !DGUX !sun !SCO325 !NCR) || ISC) && SIOCGIFCONF */
 
 /*
  * DefineSelf (fd):
@@ -318,141 +218,6 @@ ifioctl (int fd, int cmd, char *arg)
  * for this fd and add them to the selfhosts list.
  */
 
-#ifdef WINTCP /* NCR Wollongong based TCP */
-
-#include <sys/un.h>
-#include <stropts.h>
-#include <tiuser.h>
-
-#include <sys/stream.h>
-#include <net/if.h>
-#include <netinet/ip.h>
-#include <netinet/ip_var.h>
-#include <netinet/in.h>
-#include <netinet/in_var.h>
-
-void
-DefineSelf (int fd)
-{
-    /*
-     * The Wolongong drivers used by NCR SVR4/MP-RAS don't understand the
-     * socket IO calls that most other drivers seem to like. Because of
-     * this, this routine must be special cased for NCR. Eventually,
-     * this will be cleared up.
-     */
-
-    struct ipb ifnet;
-    struct in_ifaddr ifaddr;
-    struct strioctl str;
-    unsigned char *addr;
-    register HOST *host;
-    int	family, len;
-
-    if ((fd = open ("/dev/ip", O_RDWR, 0 )) < 0)
-        Error ("Getting interface configuration (1)");
-
-    /* Indicate that we want to start at the begining */
-    ifnet.ib_next = (struct ipb *) 1;
-
-    while (ifnet.ib_next)
-    {
-	str.ic_cmd = IPIOC_GETIPB;
-	str.ic_timout = 0;
-	str.ic_len = sizeof (struct ipb);
-	str.ic_dp = (char *) &ifnet;
-
-	if (ioctl (fd, (int) I_STR, (char *) &str) < 0)
-	{
-	    close (fd);
-	    Error ("Getting interface configuration (2)");
-	}
-
-	ifaddr.ia_next = (struct in_ifaddr *) ifnet.if_addrlist;
-	str.ic_cmd = IPIOC_GETINADDR;
-	str.ic_timout = 0;
-	str.ic_len = sizeof (struct in_ifaddr);
-	str.ic_dp = (char *) &ifaddr;
-
-	if (ioctl (fd, (int) I_STR, (char *) &str) < 0)
-	{
-	    close (fd);
-	    Error ("Getting interface configuration (3)");
-	}
-
-	len = sizeof(struct sockaddr_in);
-	family = ConvertAddr (IA_SIN(&ifaddr), &len, (pointer *)&addr);
-        if (family == -1 || family == FamilyLocal)
-	    continue;
-        for (host = selfhosts;
- 	     host && !addrEqual (family, addr, len, host);
-	     host = host->next)
-	    ;
-        if (host)
-	    continue;
-	MakeHost(host,len)
-	if (host)
-	{
-	    host->family = family;
-	    host->len = len;
-	    acopy(addr, host->addr, len);
-	    host->next = selfhosts;
-	    selfhosts = host;
-	}
-#ifdef XDMCP
-        {
-	    struct sockaddr broad_addr;
-
-	    /*
-	     * If this isn't an Internet Address, don't register it.
-	     */
-	    if (family != FamilyInternet)
-		continue;
-
-	    /*
- 	     * ignore 'localhost' entries as they're not useful
-	     * on the other end of the wire
-	     */
-	    if (len == 4 &&
-		addr[0] == 127 && addr[1] == 0 &&
-		addr[2] == 0 && addr[3] == 1)
-		continue;
-
-	    XdmcpRegisterConnection (family, (char *)addr, len);
-
-
-#define IA_BROADADDR(ia) ((struct sockaddr_in *)(&((struct in_ifaddr *)ia)->ia_broadaddr))
-
-	    XdmcpRegisterBroadcastAddress (
-		(struct sockaddr_in *) IA_BROADADDR(&ifaddr));
-
-#undef IA_BROADADDR
-	}
-#endif /* XDMCP */
-    }
-
-    close(fd);
-
-    /*
-     * add something of FamilyLocalHost
-     */
-    for (host = selfhosts;
-	 host && !addrEqual(FamilyLocalHost, "", 0, host);
-	 host = host->next);
-    if (!host)
-    {
-	MakeHost(host, 0);
-	if (host)
-	{
-	    host->family = FamilyLocalHost;
-	    host->len = 0;
-	    acopy("", host->addr, 0);
-	    host->next = selfhosts;
-	    selfhosts = host;
-	}
-    }
-}
-
-#else /* WINTCP */
 
 #if !defined(SIOCGIFCONF) || (defined (hpux) && ! defined (HAS_IFREQ)) || defined(QNX4)
 void
@@ -486,15 +251,7 @@ DefineSelf (int fd)
      * uname() lets me access to the whole string (it smashes release, you
      * see), whereas gethostname() kindly truncates it for me.
      */
-#ifndef QNX4
     uname(&name);
-#else
-    /* QNX4's uname returns node number in name.nodename, not the hostname
-       have to overwrite it */
-    char hname[1024];
-    gethostname(hname, 1024);
-    name.nodename = hname;
-#endif
 
     hp = _XGethostbyname(name.nodename, hparams);
     if (hp != NULL)
@@ -571,13 +328,8 @@ DefineSelf (int fd)
 		      p->ifr_addr.sa_len - sizeof (p->ifr_addr) : 0))
 #define ifraddr_size(a) (a.sa_len)
 #else
-#ifdef QNX4
-#define ifr_size(p) (p->ifr_addr.sa_len + IFNAMSIZ)
-#define ifraddr_size(a) (a.sa_len)
-#else
 #define ifr_size(p) (sizeof (struct ifreq))
 #define ifraddr_size(a) (sizeof (a))
-#endif
 #endif
 
 void
@@ -591,45 +343,12 @@ DefineSelf (int fd)
     register HOST 	*host;
     register struct ifreq *ifr;
     
-#ifdef DNETCONN
-    struct dn_naddr *dnaddr = getnodeadd();
-    /*
-     * AF_DECnet may not be listed in the interface list.  Instead use
-     * the supported library call to find out the local address (if any).
-     */
-    if (dnaddr)
-    {    
-	addr = (unsigned char *) dnaddr;
-	len = dnaddr->a_len + sizeof(dnaddr->a_len);
-	family = FamilyDECnet;
-	for (host = selfhosts;
-	     host && !addrEqual (family, addr, len, host);
-	     host = host->next)
-	    ;
-        if (!host)
-	{
-	    MakeHost(host,len)
-	    if (host)
-	    {
-		host->family = family;
-		host->len = len;
-		acopy(addr, host->addr, len);
-		host->next = selfhosts;
-		selfhosts = host;
-	    }
-	}
-    }
-#endif
     ifc.ifc_len = sizeof (buf);
     ifc.ifc_buf = buf;
     if (ifioctl (fd, SIOCGIFCONF, (pointer) &ifc) < 0)
         Error ("Getting interface configuration (4)");
 
-#ifdef ISC
-#define IFC_IFC_REQ (struct ifreq *) ifc.ifc_buf
-#else
 #define IFC_IFC_REQ ifc.ifc_req
-#endif
 
     cplim = (char *) IFC_IFC_REQ + ifc.ifc_len;
     
@@ -637,13 +356,6 @@ DefineSelf (int fd)
     {
 	ifr = (struct ifreq *) cp;
 	len = ifraddr_size (ifr->ifr_addr);
-#ifdef DNETCONN
-	/*
-	 * DECnet was handled up above.
-	 */
-	if (ifr->ifr_addr.sa_family == AF_DECnet)
-	    continue;
-#endif /* DNETCONN */
 	family = ConvertAddr (&ifr->ifr_addr, &len, (pointer *)&addr);
         if (family == -1 || family == FamilyLocal)
 	    continue;
@@ -739,7 +451,6 @@ DefineSelf (int fd)
     }
 }
 #endif /* hpux && !HAS_IFREQ */
-#endif /* WINTCP */
 
 #ifdef XDMCP
 void
@@ -794,14 +505,7 @@ ResetHosts (char *display)
 #if defined(TCPCONN) || defined(STREAMSCONN) || defined(MNX_TCPCONN)
         struct sockaddr_in in;
 #endif /* TCPCONN || STREAMSCONN */
-#ifdef DNETCONN
-        struct sockaddr_dn dn;
-#endif
     } 			saddr;
-#ifdef DNETCONN
-    struct nodeent 	*np;
-    struct dn_naddr 	dnaddr, *dnaddrp, *dnet_addr();
-#endif
 #ifdef K5AUTH
     krb5_principal      princ;
     krb5_data		kbuf;
@@ -818,21 +522,13 @@ ResetHosts (char *display)
         validhosts = host->next;
         FreeHost (host);
     }
-#ifndef __EMX__
 #define ETC_HOST_PREFIX "/etc/X"
 #define ETC_HOST_SUFFIX ".hosts"
-#else
-#define ETC_HOST_PREFIX "/XFree86/lib/X11/X"
-#define ETC_HOST_SUFFIX ".hosts"
-#endif /* __EMX__ */
     fnamelen = strlen(ETC_HOST_PREFIX) + strlen(ETC_HOST_SUFFIX) +
 		strlen(display) + 1;
     if (fnamelen > sizeof(fname))
 	FatalError("Display name `%s' is too long\n", display);
     sprintf(fname, ETC_HOST_PREFIX "%s" ETC_HOST_SUFFIX, display);
-#ifdef __EMX__
-    strcpy(fname, (char*)__XOS2RedirRoot(fname));
-#endif /* __EMX__ */
 
     if ((fd = fopen (fname, "r")) != 0)
     {
@@ -842,10 +538,6 @@ ResetHosts (char *display)
 	    continue;
     	if ((ptr = strchr(ohostname, '\n')) != 0)
     	    *ptr = 0;
-#ifdef __EMX__
-    	if ((ptr = strchr(ohostname, '\r')) != 0)
-    	    *ptr = 0;
-#endif
         hostlen = strlen(ohostname) + 1;
         for (i = 0; i < hostlen; i++)
 	    lhostname[i] = tolower(ohostname[i]);
@@ -859,13 +551,6 @@ ResetHosts (char *display)
 	else if (!strncmp("inet:", lhostname, 5))
 	{
 	    family = FamilyInternet;
-	    hostname = ohostname + 5;
-	}
-#endif
-#ifdef DNETCONN
-	else if (!strncmp("dnet:", lhostname, 5))
-	{
-	    family = FamilyDECnet;
 	    hostname = ohostname + 5;
 	}
 #endif
@@ -883,32 +568,6 @@ ResetHosts (char *display)
 	    hostname = ohostname + 4;
 	}
 #endif
-#ifdef DNETCONN
-    	if ((family == FamilyDECnet) ||
-	    (ptr = strchr(hostname, ':')) && (*(ptr + 1) == ':') &&
-	    !(*ptr = '\0'))	/* bash trailing colons if necessary */
-	{
-    	    /* node name (DECnet names end in "::") */
-	    dnaddrp = dnet_addr(hostname);
-    	    if (!dnaddrp && (np = getnodebyname (hostname)))
-	    {
-		/* node was specified by name */
-		saddr.sa.sa_family = np->n_addrtype;
-		len = sizeof(saddr.sa);
-		if (ConvertAddr (&saddr.sa, &len, (pointer *)&addr) == FamilyDECnet)
-		{
-		    bzero ((char *) &dnaddr, sizeof (dnaddr));
-		    dnaddr.a_len = np->n_length;
-		    acopy (np->n_addr, dnaddr.a_addr, np->n_length);
-		    dnaddrp = &dnaddr;
-		}
-    	    }
-	    if (dnaddrp)
-		(void) NewHost(FamilyDECnet, (pointer)dnaddrp,
-			(int)(dnaddrp->a_len + sizeof(dnaddrp->a_len)));
-    	}
-	else
-#endif /* DNETCONN */
 #ifdef K5AUTH
 	if (family == FamilyKrb5Principal)
 	{
@@ -1237,21 +896,6 @@ CheckAddr (
 	    len = -1;
         break;
 #endif 
-#ifdef DNETCONN
-      case FamilyDECnet:
-        {
-	    struct dn_naddr *dnaddr = (struct dn_naddr *) pAddr;
-
-	    if ((length < sizeof(dnaddr->a_len)) ||
-		(length < dnaddr->a_len + sizeof(dnaddr->a_len)))
-		len = -1;
-	    else
-		len = dnaddr->a_len + sizeof(dnaddr->a_len);
-	    if (len > sizeof(struct dn_naddr))
-		len = -1;
-	}
-        break;
-#endif
       default:
         len = -1;
     }
@@ -1324,15 +968,6 @@ ConvertAddr (
         *len = sizeof (struct in_addr);
         *addr = (pointer) &(((struct sockaddr_in *) saddr)->sin_addr);
         return FamilyInternet;
-#endif
-#ifdef DNETCONN
-    case AF_DECnet:
-	{
-	    struct sockaddr_dn *sdn = (struct sockaddr_dn *) saddr;
-	    *len = sdn->sdn_nodeaddrl + sizeof(sdn->sdn_nodeaddrl);
-	    *addr = (pointer) &(sdn->sdn_add);
-	}
-        return FamilyDECnet;
 #endif
 #ifdef CHAOSCONN
     case AF_CHAOS:

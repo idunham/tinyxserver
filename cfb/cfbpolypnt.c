@@ -143,13 +143,6 @@ cfbPolyPoint(pDrawable, pGC, mode, npt, pptInit)
 	    PointLoop(*(addrp + (intToY(pt) << npwidth) + intToX(pt)) = xor;)
 #endif
 	}
-#ifdef sun
-	else if (npwidth == 1152)
-	{
-	    register int    y;
-	    PointLoop(y = intToY(pt); *(addrp + (y << 10) + (y << 7) + intToX(pt)) = xor;)
-	}
-#endif
 	else
 	{
 #if PSZ == 24

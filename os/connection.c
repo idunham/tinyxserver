@@ -63,9 +63,6 @@ SOFTWARE.
  *
  *****************************************************************/
 
-#ifdef WIN32
-#include <X11/Xwinsock.h>
-#endif
 #include <X11/X.h>
 #include <X11/Xproto.h>
 #include <X11/Xtrans.h>
@@ -73,43 +70,16 @@ SOFTWARE.
 #include <signal.h>
 #include <stdio.h>
 
-#ifndef WIN32
-#if defined(Lynx)
-#include <socket.h>
-#else
 #include <sys/socket.h>
-#endif
-
-#ifdef hpux
-#include <sys/utsname.h>
-#include <sys/ioctl.h>
-#endif
-
-#if defined(DGUX)
-#include <sys/ioctl.h>
-#include <sys/utsname.h>
-#include <sys/socket.h>
-#include <sys/uio.h>
-#include <netinet/in.h>
-#include <netinet/tcp.h>
-#include <sys/param.h>
-#include <unistd.h>
-#endif
 
 
-#ifdef AIXV3
-#include <sys/ioctl.h>
-#endif
 
-#ifdef __EMX__
-#define select(n,r,w,x,t) os2PseudoSelect(n,r,w,x,t)
-extern __const__ int _nfiles;
-#endif
+
+
 
 #if defined(TCPCONN) || defined(STREAMSCONN)
 # include <netinet/in.h>
 # include <arpa/inet.h>
-# if !defined(hpux)
 #  ifdef apollo
 #   ifndef NO_TCP_H
 #    include <netinet/tcp.h>
@@ -118,11 +88,8 @@ extern __const__ int _nfiles;
 #   ifdef CSRG_BASED
 #    include <sys/param.h>
 #   endif
-#    ifndef __EMX__
 #     include <netinet/tcp.h>
-#    endif
 #  endif
-# endif
 #endif
 
 #ifdef AMTCPCONN
@@ -131,14 +98,7 @@ extern __const__ int _nfiles;
 #include <server/ip/gen/inet.h>
 #endif
 
-#if !defined(__EMX__)
-#ifndef Lynx
 #include <sys/uio.h>
-#else
-#include <uio.h>
-#endif
-#endif
-#endif /* WIN32 */
 #include "misc.h"		/* for typedef of pointer */
 #include "osdep.h"
 #include <X11/Xpoll.h>
@@ -157,15 +117,8 @@ extern __const__ int _nfiles;
 #include "lbxserve.h"
 #endif
 
-#ifdef X_NOT_POSIX
-#define Pid_t int
-#else
 #define Pid_t pid_t
-#endif
 
-#ifdef DNETCONN
-#include <netdnet/dn.h>
-#endif /* DNETCONN */
 
 int lastfdesc;			/* maximum file descriptor */
 
@@ -196,15 +149,6 @@ static fd_set SavedClientsWithInput;
 int GrabInProgress = 0;
 
 int *ConnectionTranslation = NULL;
-#if defined(WIN32)
-/* SPAM ALERT !!!
- * On NT fds are not between 0 and MAXSOCKS, they are unrelated, and there is
- * not even a known maximum value, so use something quite arbitrary for now.
- * This is clearly boggus and another form of storage which doesn't use the fd
- * as a direct index should really be implemented for NT.
- */
-#define MAXFD 500
-#endif
 
 XtransConnInfo 	*ListenTransConns = NULL;
 int	       	*ListenTransFds = NULL;
@@ -255,9 +199,7 @@ InitConnectionLimits()
 {
     lastfdesc = -1;
 
-#ifndef __CYGWIN__
 
-#ifndef __EMX__
 
 #if !defined(XNO_SYSCONF) && defined(_SC_OPEN_MAX)
     lastfdesc = sysconf(_SC_OPEN_MAX) - 1;
@@ -273,11 +215,7 @@ InitConnectionLimits()
 	lastfdesc = _NFILE - 1;
 #endif
 
-#else /* __EMX__ */
-    lastfdesc = _nfiles - 1;
-#endif
 
-#endif /* __CYGWIN__ */
 
     /* This is the fallback */
     if (lastfdesc < 0)
@@ -298,11 +236,7 @@ InitConnectionLimits()
     ErrorF("InitConnectionLimits: MaxClients = %d\n", MaxClients);
 #endif
 
-#if !defined(WIN32)
     ConnectionTranslation = (int *)xnfalloc(sizeof(int)*(lastfdesc + 1));
-#else
-    ConnectionTranslation = (int *)xnfalloc(sizeof(int)*(MAXFD));
-#endif
 }
 
 
@@ -323,11 +257,7 @@ CreateWellKnownSockets()
     FD_ZERO(&LastSelectMask);
     FD_ZERO(&ClientsWithInput);
 
-#if !defined(WIN32)
     for (i=0; i<MaxClients; i++) ConnectionTranslation[i] = 0;
-#else
-    for (i=0; i<MAXFD; i++) ConnectionTranslation[i] = 0;
-#endif
 
     FD_ZERO (&WellKnownConnections);
 
@@ -368,10 +298,8 @@ CreateWellKnownSockets()
 
     if (!XFD_ANYSET (&WellKnownConnections))
         FatalError ("Cannot establish any listening sockets - Make sure an X server isn't already running");
-#if !defined(WIN32)
     OsSignal (SIGPIPE, SIG_IGN);
     OsSignal (SIGHUP, AutoResetServer);
-#endif
     OsSignal (SIGINT, GiveUp);
     OsSignal (SIGTERM, GiveUp);
     XFD_COPYSET (&WellKnownConnections, &AllSockets);
@@ -391,7 +319,6 @@ CreateWellKnownSockets()
      * in the second case, the signal will be quite
      * useful
      */
-#if !defined(WIN32)
     if (OsSignal (SIGUSR1, SIG_IGN) == SIG_IGN)
 	RunFromSmartParent = TRUE;
     ParentProcess = getppid ();
@@ -400,7 +327,6 @@ CreateWellKnownSockets()
 	    kill (ParentProcess, SIGUSR1);
 	}
     }
-#endif
 #ifdef XDMCP
     XdmcpInit ();
 #endif
@@ -452,13 +378,11 @@ ResetWellKnownSockets ()
     /*
      * See above in CreateWellKnownSockets about SIGUSR1
      */
-#if !defined(WIN32)
     if (RunFromSmartParent) {
 	if (ParentProcess > 1) {
 	    kill (ParentProcess, SIGUSR1);
 	}
     }
-#endif
     /*
      * restart XDMCP
      */
@@ -509,12 +433,6 @@ AuthAudit (client, letin, saddr, len, proto_n, auth_proto, auth_id)
 	    sprintf(out, "IP %s port %d",
 		    inet_ntoa(((struct sockaddr_in *) saddr)->sin_addr),
 		    ntohs(((struct sockaddr_in *) saddr)->sin_port));
-	    break;
-#endif
-#ifdef DNETCONN
-	case AF_DECnet:
-	    sprintf(out, "DN %s",
-		    dnet_ntoa(&((struct sockaddr_dn *) saddr)->sdn_add));
 	    break;
 #endif
 #ifdef AMRPCCONN
@@ -750,11 +668,7 @@ AllocNewConnection (trans_conn, fd, conn_time)
 #ifdef LBX
 	trans_conn &&
 #endif
-#ifndef WIN32
 	fd >= lastfdesc
-#else
-	XFD_SETCOUNT(&AllClients) >= MaxClients
-#endif
 	)
 	return NullClient;
     oc = (OsCommPtr)xalloc(sizeof(OsCommRec));
@@ -879,24 +793,16 @@ EstablishNewConnections(clientUnused, closure)
 		CloseDownClient(client);     
 	}
     }
-#ifndef WIN32
     for (i = 0; i < howmany(XFD_SETSIZE, NFDBITS); i++)
     {
       while (readyconnections.fds_bits[i])
-#else
-      for (i = 0; i < XFD_SETCOUNT(&readyconnections); i++) 
-#endif
       {
 	XtransConnInfo trans_conn, new_trans_conn;
 	int status;
 
-#ifndef WIN32
 	curconn = ffs (readyconnections.fds_bits[i]) - 1;
 	readyconnections.fds_bits[i] &= ~((fd_mask)1 << curconn);
 	curconn += (i * (sizeof(fd_mask)*8));
-#else
-	curconn = XFD_FD(&readyconnections, i);
-#endif
 
 	if ((trans_conn = lookup_trans_conn (curconn)) == NULL)
 	    continue;
@@ -927,9 +833,7 @@ EstablishNewConnections(clientUnused, closure)
 	    _XSERVTransClose(new_trans_conn);
 	}
       }
-#ifndef WIN32
     }
-#endif
     return TRUE;
 }
 
@@ -1043,22 +947,16 @@ CloseDownFileDescriptor(oc)
 void
 CheckConnections()
 {
-#ifndef WIN32
     fd_mask		mask;
-#endif
     fd_set		tmask; 
     register int	curclient, curoff;
     int			i;
     struct timeval	notime;
     int r;
-#ifdef WIN32
-    fd_set savedAllClients;
-#endif
 
     notime.tv_sec = 0;
     notime.tv_usec = 0;
 
-#ifndef WIN32
     for (i=0; i<howmany(XFD_SETSIZE, NFDBITS); i++)
     {
 	mask = AllClients.fds_bits[i];
@@ -1074,18 +972,6 @@ CheckConnections()
 	    mask &= ~((fd_mask)1 << curoff);
 	}
     }	
-#else
-    XFD_COPYSET(&AllClients, &savedAllClients);
-    for (i = 0; i < XFD_SETCOUNT(&savedAllClients); i++)
-    {
-	curclient = XFD_FD(&savedAllClients, i);
-	FD_ZERO(&tmask);
-	FD_SET(curclient, &tmask);
-	r = Select (curclient + 1, &tmask, NULL, NULL, &notime);
-	if (r < 0)
-	    CloseDownClient(clients[ConnectionTranslation[curclient]]);
-    }	
-#endif
 }
 
 
@@ -1326,61 +1212,3 @@ MakeClientGrabPervious(client)
     }
 }
 
-#ifdef AIXV3
-
-static fd_set pendingActiveClients;
-static BOOL reallyGrabbed;
-
-/****************
-* DontListenToAnybody:
-*   Don't listen to requests from any clients. Continue to handle new
-*   connections, but don't take any protocol requests from anybody.
-*   We have to take care if there is already a grab in progress, though.
-*   Undone by PayAttentionToClientsAgain. We also have to be careful
-*   not to accept any more input from the currently dispatched client.
-*   we do this be telling dispatch it is time to yield.
-
-*   We call this when the server loses access to the glass
-*   (user hot-keys away).  This looks like a grab by the 
-*   server itself, but gets a little tricky if there is already
-*   a grab in progress.
-******************/
-
-void
-DontListenToAnybody()
-{
-    if (!GrabInProgress)
-    {
-	XFD_COPYSET(&ClientsWithInput, &SavedClientsWithInput);
-	XFD_COPYSET(&AllSockets, &SavedAllSockets);
-	XFD_COPYSET(&AllClients, &SavedAllClients);
-	GrabInProgress = TRUE;
-	reallyGrabbed = FALSE;
-    }
-    else
-    {
-	XFD_COPYSET(&AllClients, &pendingActiveClients);
-	reallyGrabbed = TRUE;
-    }
-    FD_ZERO(&ClientsWithInput);
-    XFD_UNSET(&AllSockets, &AllClients);
-    FD_ZERO(&AllClients);
-    isItTimeToYield = TRUE;
-}
-
-void
-PayAttentionToClientsAgain()
-{
-    if (reallyGrabbed)
-    {
-	XFD_ORSET(&AllSockets, &AllSockets, &pendingActiveClients);
-	XFD_ORSET(&AllClients, &AllClients, &pendingActiveClients);
-    }
-    else
-    {
-	ListenToAllClients();
-    }
-    reallyGrabbed = FALSE;
-}
-
-#endif

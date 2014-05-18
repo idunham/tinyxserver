@@ -54,20 +54,11 @@ SOFTWARE.
  *****************************************************************/
 /* $XFree86: xc/programs/Xserver/os/io.c,v 3.32 2001/12/14 20:00:34 dawes Exp $ */
 #include <string.h>
-#ifdef WIN32
-#include <X11/Xwinsock.h>
-#endif
 #include <stdio.h>
 #include <X11/Xtrans.h>
 #include <X11/Xmd.h>
 #include <errno.h>
-#if !defined(__EMX__) && !defined(WIN32)
-#ifndef Lynx
 #include <sys/uio.h>
-#else
-#include <uio.h>
-#endif
-#endif
 #include <X11/X.h>
 #define NEED_REPLIES
 #include <X11/Xproto.h>
@@ -89,7 +80,6 @@ CallbackListPtr       FlushCallback;
 /* check for both EAGAIN and EWOULDBLOCK, because some supposedly POSIX
  * systems are broken and return EWOULDBLOCK when they should return EAGAIN
  */
-#ifndef __EMX__
 #if defined(EAGAIN) && defined(EWOULDBLOCK)
 #define ETEST(err) (err == EAGAIN || err == EWOULDBLOCK)
 #else
@@ -98,9 +88,6 @@ CallbackListPtr       FlushCallback;
 #else
 #define ETEST(err) (err == EWOULDBLOCK)
 #endif
-#endif
-#else /* __EMX__  Writing to full pipes may return ENOSPC */
-#define ETEST(err) (err == EAGAIN || err == EWOULDBLOCK || err == ENOSPC)
 #endif
 
 Bool CriticalOutputPending;
@@ -188,9 +175,6 @@ OsCommPtr AvailableInput = (OsCommPtr)NULL;
 #define YieldControlDeath()			\
         { timesThisConnection = 0; }
 
-#ifdef hpux_not_tog
-#define LBX_NEED_OLD_SYMBOL_FOR_LOADABLES
-#endif
 
 #ifdef LBX
 #ifdef LBX_NEED_OLD_SYMBOL_FOR_LOADABLES
@@ -372,19 +356,6 @@ ReadRequestFromClient(client)
 	{
 	    if ((result < 0) && ETEST(errno))
 	    {
-#if defined(SVR4) && defined(i386) && !defined(sun)
-#if defined(LBX) && 0
-		/*
-		 * For LBX connections, we can get a valid EWOULDBLOCK
-		 * There is probably a better way of distinguishing LBX
-		 * connections, but this works. (DHD)
-		 */
-		extern int LbxRead();
-		if (oc->Read == LbxRead)
-#else
-		if (0)
-#endif
-#endif
 		{
 		    YieldControlNoInput();
 		    return 0;
@@ -805,9 +776,6 @@ FlushAllOutput()
     OsCommPtr oc;
     register ClientPtr client;
     Bool newoutput = NewOutputPending;
-#if defined(WIN32)
-    fd_set newOutputPending;
-#endif
 
     if (FlushCallback)
 	CallCallbacks(&FlushCallback, NULL);
@@ -823,7 +791,6 @@ FlushAllOutput()
     CriticalOutputPending = FALSE;
     NewOutputPending = FALSE;
 
-#ifndef WIN32
     for (base = 0; base < howmany(XFD_SETSIZE, NFDBITS); base++)
     {
 	mask = OutputPending.fds_bits[ base ];
@@ -851,31 +818,6 @@ FlushAllOutput()
 		(void)FlushClient(client, oc, (char *)NULL, 0);
 	}
     }
-#else  /* WIN32 */
-    FD_ZERO(&newOutputPending);
-    for (base = 0; base < XFD_SETCOUNT(&OutputPending); base++)
-    {
-	    index = XFD_FD(&OutputPending, base);
-	    if ((index = ConnectionTranslation[index]) == 0)
-		continue;
-	    client = clients[index];
-	    if (client->clientGone)
-		continue;
-	    oc = (OsCommPtr)client->osPrivate;
-	    if (
-#ifdef LBX
-		!oc->proxy &&
-#endif
-		FD_ISSET(oc->fd, &ClientsWithInput))
-	    {
-		FD_SET(oc->fd, &newOutputPending); /* set the bit again */
-		NewOutputPending = TRUE;
-	    }
-	    else
-		(void)FlushClient(client, oc, (char *)NULL, 0);
-    }
-    XFD_COPYSET(&newOutputPending, &OutputPending);
-#endif /* WIN32 */
 }
 
 void
